@@ -17,18 +17,9 @@ Before contributing, read:
 
 **English is the primary language of this repository.**
 
-Use English for:
+Use English for source code, comments, documentation, commit messages, branch names, issues, pull requests, test descriptions, and diagnostic messages.
 
-- Source code and comments.
-- Documentation.
-- Commit messages.
-- Branch names.
-- Issues and pull requests.
-- Test descriptions and diagnostic messages.
-
-Home Assistant user-facing translations may use other languages.
-
-Existing Spanish translations should be preserved where appropriate.
+Home Assistant user-facing translations may use other languages. Existing Spanish translations should be preserved where appropriate.
 
 ## Development principles
 
@@ -96,12 +87,14 @@ Apply these protections to all diagnostic logging levels, including DEBUG.
 
 ## Branching strategy
 
-The intended workflow uses two long-lived branches:
+The project uses two long-lived branches:
 
 | Branch | Purpose |
 |---|---|
 | `main` | Stable, validated, release-ready code |
 | `develop` | Integration branch for upcoming changes |
+
+Both branches are published and protected by active GitHub rulesets.
 
 Short-lived branches are created from `develop`.
 
@@ -118,17 +111,22 @@ Use the following naming conventions:
 
 Keep branch names short, descriptive, and in English.
 
-### Branch workflow activation
+### Branch protection status
 
-This workflow is being introduced as part of the project's documentation and repository organization.
+GitHub rulesets named `Protect main` and `Protect develop` are configured and active.
 
-Until `develop` exists and branch protections are configured, the repository may still be operating under its previous direct-to-`main` workflow.
+Both target their respective branches and are configured to:
 
-Do not assume branch protection is active merely because it is described here.
+- Require changes through pull requests.
+- Require the `unit` status check from GitHub Actions.
+- Require pull request branches to be up to date before merging.
+- Prevent branch deletion.
+- Block force pushes.
+- Require zero approving reviews, allowing maintenance by a single maintainer.
 
-The initial documentation alignment may be committed to `main` before the new workflow is activated.
+The rulesets were configured in October 2026. Their end-to-end enforcement has not yet been verified through a completed pull request.
 
-After activation, normal feature and documentation changes should follow the branch and pull request process described below.
+The current settings in GitHub remain authoritative if they change.
 
 ## Standard contribution workflow
 
@@ -138,7 +136,7 @@ Synchronize the local repository and create a short-lived branch from the latest
 
 For example:
 
-```text id="rbd4r9"
+```text
 develop
    |
    +-- fix/sms-timeout-handling
@@ -158,7 +156,7 @@ Avoid combining unrelated features, fixes, and documentation updates in one pull
 
 Run the available automated tests where a Python environment is available:
 
-```bash id="uvbfsy"
+```bash
 python -m unittest discover -s tests -v
 ```
 
@@ -176,109 +174,63 @@ Use clear, concise commit messages in English.
 
 Suggested format:
 
-```text id="7j99ta"
+```text
 type: short description
 ```
 
 Examples:
 
-```text id="yluhci"
-fix: handle modem connection timeout
-feat: add optional signal monitoring
-docs: clarify SMS storage safety
+```text
+fix: handle uncertain SMS submission outcomes
+docs: update contribution workflow
 test: cover notification failures
-chore: update GitHub Actions workflow
 ```
 
-Prefer one coherent change per commit.
+Push the working branch to GitHub. Do not push directly to `main` or `develop`.
 
-A coordinated documentation alignment may reasonably be committed as one commit.
+### 5. Open a pull request to `develop`
 
-Push the branch to GitHub when the change is ready for review.
+Open a pull request from the short-lived working branch into `develop`.
 
-### 5. Open a pull request
+Describe:
 
-Open a pull request from the working branch into `develop`.
+- The purpose of the change.
+- Relevant implementation details.
+- Tests performed and their results.
+- Any unverified behavior or required hardware testing.
+- Safety implications, especially for SMS sending and storage.
 
-The pull request should explain:
+Wait for the required GitHub Actions checks to pass before merging.
 
-- What changed and why.
-- Which behavior was verified.
-- Which tests were run.
-- Which tests could not be run.
-- Whether any live-device testing is required.
-- Any privacy, SMS storage, or LTE failover implications.
+Do not merge a change that fails required checks.
 
-Do not claim real-device testing unless it actually occurred.
+### 6. Integrate validated changes into `main`
 
-### 6. Review and merge
+After changes have been integrated and validated on `develop`, open a pull request from `develop` into `main` when preparing a stable release.
 
-Review the code, documentation, and automated test results.
+Ensure the required checks pass and the release criteria are satisfied.
 
-Resolve identified problems before merging.
-
-Prefer squash merging for small, focused feature branches when appropriate.
-
-Delete short-lived branches after successful merging when they are no longer needed.
-
-## Promoting `develop` to `main`
-
-When a group of changes is ready for release:
-
-1. Confirm that the intended changes are complete.
-2. Run the available automated checks.
-3. Perform any necessary, explicitly authorized Home Assistant or modem tests.
-4. Review the compatibility matrix and documentation.
-5. Confirm that no unsafe SMS behavior or unexpected polling has been introduced.
-6. Open a pull request from `develop` into `main`.
-7. Review the final changes and merge only after validation.
-8. Create a version tag and GitHub release when release criteria are satisfied.
-
-The version declared in `manifest.json` must remain consistent with the intended release.
-
-Do not assume that a manifest version automatically creates a Git tag or release.
-
-## GitHub Desktop workflow
-
-GitHub Desktop is a supported workflow for the project maintainer.
-
-A typical contribution can be completed using:
-
-1. **Fetch origin** and update the local `develop` branch.
-2. Create a new branch from `develop`.
-3. Edit the files locally.
-4. Review changed files in the **Changes** tab.
-5. Commit the changes with an English message.
-6. Select **Publish branch** or **Push origin**, as appropriate.
-7. Open a pull request on GitHub targeting `develop`.
-8. Wait for automated checks and complete the review before merging.
-
-Before committing, check the diff for accidental changes, sensitive data, unrelated files, and unintended deletions.
-
-For the initial documentation alignment, the maintainer may continue editing locally and make one coordinated commit on `main` before the new workflow is activated.
+Do not treat every merge into `develop` as a release.
 
 ## Branch protection
-
-The intended repository protections are:
 
 ### `main`
 
 - Require changes through pull requests.
-- Require relevant GitHub Actions checks to pass.
-- Prevent accidental direct pushes.
+- Require the `unit` GitHub Actions check to pass.
+- Require branches to be up to date before merging.
 - Prevent force pushes and branch deletion.
 
 ### `develop`
 
 - Require changes through pull requests.
-- Require relevant GitHub Actions checks to pass.
+- Require the `unit` GitHub Actions check to pass.
+- Require branches to be up to date before merging.
 - Prevent force pushes and branch deletion.
 
-Exact GitHub settings should be selected based on repository capabilities and the available CI workflows.
+Both rulesets currently require zero approving reviews.
 
-For a small project with a single maintainer, do not enable approval rules that make normal maintenance impossible without another reviewer.
-
-**These are intended protections, not a claim that they are already configured.**
+These protections are configured in GitHub, not enforced by documentation alone.
 
 ## Testing expectations
 
@@ -375,4 +327,4 @@ A release should be considered only when:
 - No unintended polling or router changes have been introduced.
 - Installation instructions match the release contents.
 
-The project is currently in early development. The existence of working SMS functionality does not by itself mean that every release criterion has been met.
+The project is currently in early development. Working SMS functionality and passing unit tests do not by themselves establish production readiness.

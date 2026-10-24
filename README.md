@@ -161,9 +161,16 @@ python -m unittest discover -s tests -v
 
 GitHub Actions provides automated checks. Passing these checks does not replace testing inside Home Assistant or against supported hardware.
 
-The project is preparing a `main` / `develop` branching workflow. Until that workflow is established, `main` remains the current working branch.
+The repository uses a protected-branch workflow:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the intended development process.
+- **`main`** contains validated, release-ready code.
+- **`develop`** is the integration branch for ongoing development.
+- Short-lived working branches are created from `develop` and merged through pull requests.
+- Both `main` and `develop` require the `unit` GitHub Actions check to pass before merging.
+
+The branch protection rules are active. Their end-to-end behavior will be validated through the project's first pull request.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development workflow.
 
 ## License
 

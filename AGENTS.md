@@ -226,22 +226,29 @@ For notifications with multiple recipients, consider partial success: earlier re
 
 ## Development workflow
 
-The project is transitioning to a branch-based contribution workflow.
+The repository uses a protected-branch workflow.
 
-Until that transition is completed, follow the repository's current documented process.
+The following branches are published and protected:
 
-Once the `develop` branch and branch protections are established, use the workflow defined in [CONTRIBUTING.md](CONTRIBUTING.md):
+- `main`: validated, release-ready code.
+- `develop`: integration branch for ongoing development.
 
-- `main`: tested, release-ready code.
-- `develop`: integration branch for changes under development.
+Short-lived working branches must normally be created from `develop`:
+
 - `feature/...`: new functionality.
 - `fix/...`: bug fixes.
 - `docs/...`: documentation changes.
 - `test/...`: test-related changes.
+- `refactor/...`: internal restructuring.
+- `chore/...`: maintenance and tooling.
 
-Changes should be proposed through pull requests. Do not push directly to protected branches.
+Changes must be submitted through pull requests. Do not push directly to `main` or `develop`.
 
-Treat `CONTRIBUTING.md` as the authoritative source for branching, pull request, review, and merge requirements.
+Both branches have active GitHub rulesets requiring the `unit` GitHub Actions check to pass, with zero mandatory approving reviews.
+
+The end-to-end enforcement of these rules will be verified through a real pull request.
+
+Treat [CONTRIBUTING.md](CONTRIBUTING.md) as the authoritative source for branching, pull request, review, and merge requirements.
 
 ## Workflow for each change
 
