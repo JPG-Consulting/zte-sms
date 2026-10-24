@@ -39,6 +39,10 @@ class ZTESMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Configure the modem and default recipients."""
+        # Only one modem is supported per Home Assistant installation.
+        if self._async_current_entries():
+            return self.async_abort(reason="single_instance_allowed")
+
         errors = {}
 
         if user_input is not None:

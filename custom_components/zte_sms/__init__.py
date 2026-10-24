@@ -36,16 +36,48 @@ async def async_setup_entry(
     entry: ConfigEntry,
 ) -> bool:
     """Set up ZTE SMS from a config entry."""
-    hass.data.setdefault(DOMAIN, {})
+    clients = hass.data.setdefault(DOMAIN, {})
+
+    # Only one modem can be active at a time.
+    if clients and entry.entry_id not in clients:
+        raise RuntimeError(
+            "ZTE SMS supports only one modem configuration"
+        )
 
     host = entry.data["host"]
     client = ZTEClient(base_url=f"http://{host}")
 
-    hass.data[DOMAIN][entry.entry_id] = client
+    # Forward the platform before publishing the new client.
+    # The notify platform retrieves its client from hass.data,
+    # so make it available temporarily during setup.
+    previous_client = clients.get(entry.entry_id)
+    clients[entry.entry_id] = client
+
+    try:
+        await hass.config_entries.async_forward_entry_setups(
+            entry,
+            PLATFORMS,
+        )
+    except Exception:
+        # Restore the previous state if platform setup fails.
+        if previous_client is None:
+            clients.pop(entry.entry_id, None)
+        else:
+            clients[entry.entry_id] = previous_client
+        raise
 
     async def async_send_sms(call: ServiceCall) -> None:
-        """Send an SMS when explicitly requested."""
-        await client.send_sms(
+        """Send an SMS using the currently active modem."""
+        active_clients = hass.data.get(DOMAIN, {})
+
+        if len(active_clients) != 1:
+            raise RuntimeError(
+                "ZTE SMS requires exactly one active modem"
+            )
+
+        active_client = next(iter(active_clients.values()))
+
+        await active_client.send_sms(
             number=call.data["number"],
             message=call.data["message"],
         )
@@ -57,11 +89,6 @@ async def async_setup_entry(
             async_send_sms,
             schema=SEND_SMS_SCHEMA,
         )
-
-    await hass.config_entries.async_forward_entry_setups(
-        entry,
-        PLATFORMS,
-    )
 
     return True
 
@@ -77,9 +104,16 @@ async def async_unload_entry(
     ):
         return False
 
-    hass.data[DOMAIN].pop(entry.entry_id, None)
+    clients = hass.data.get(DOMAIN, {})
+    clients.pop(entry.entry_id, None)
 
-    if not hass.data[DOMAIN]:
-        hass.services.async_remove(DOMAIN, SERVICE_SEND_SMS)
+    if not clients and hass.services.has_service(
+        DOMAIN,
+        SERVICE_SEND_SMS,
+    ):
+        hass.services.async_remove(
+            DOMAIN,
+            SERVICE_SEND_SMS,
+        )
 
     return True

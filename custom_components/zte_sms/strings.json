@@ -19,7 +19,8 @@
       "invalid_phone_number": "Enter valid phone numbers in international format, starting with +."
     },
     "abort": {
-      "already_configured": "This modem is already configured."
+      "already_configured": "This modem is already configured.",
+      "single_instance_allowed": "Only one ZTE SMS modem can be configured per Home Assistant installation."
     }
   },
   "options": {
