@@ -246,7 +246,7 @@ Changes must be submitted through pull requests. Do not push directly to `main` 
 
 Both branches have active GitHub rulesets requiring the `unit` GitHub Actions check to pass, with zero mandatory approving reviews.
 
-The end-to-end enforcement of these rules will be verified through a real pull request.
+The rulesets have been exercised through completed pull requests into `develop`, including the required `unit` checks.
 
 Treat [CONTRIBUTING.md](CONTRIBUTING.md) as the authoritative source for branching, pull request, review, and merge requirements.
 
@@ -258,12 +258,14 @@ Treat [CONTRIBUTING.md](CONTRIBUTING.md) as the authoritative source for branchi
 4. Describe expected behavior, performance implications, and safety risks.
 5. Add or update tests using synthetic data and no live modem access.
 6. Implement the change while preserving existing functionality.
-7. Run available automated checks.
-8. Identify tests that require real Home Assistant or modem hardware.
-9. Request authorization before any live SMS operation or other state-changing test.
-10. Update the relevant documentation and task tracking when appropriate.
+7. Commit and push the working branch, then verify the available automated checks on that branch.
+8. Identify and complete applicable controlled Home Assistant runtime tests before opening a pull request, where practical.
+9. Request explicit authorization before any live SMS operation or other state-changing modem test.
+10. If validation fails, fix the problem on the same working branch and repeat the relevant checks. Document any tests that cannot safely or practically be performed.
+11. Update the relevant documentation and task tracking when appropriate.
+12. Open a pull request to `develop` only after the applicable pre-PR validation is complete and known in-scope failures have been resolved.
 
-A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of real-device compatibility.
+A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of real-device compatibility. A pull request is the final review and integration step, not the start of initial validation.
 
 ## Collaboration with the project maintainer
 

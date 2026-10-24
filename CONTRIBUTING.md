@@ -124,7 +124,7 @@ Both target their respective branches and are configured to:
 - Block force pushes.
 - Require zero approving reviews, allowing maintenance by a single maintainer.
 
-The rulesets were configured in October 2026. Their end-to-end enforcement has not yet been verified through a completed pull request.
+The rulesets were configured in October 2026 and have been verified through completed pull requests.
 
 The current settings in GitHub remain authoritative if they change.
 
@@ -168,6 +168,10 @@ If local tests cannot be run, state that clearly and use GitHub Actions for the 
 
 A passing workflow does not replace real Home Assistant compatibility testing.
 
+Complete all applicable validation on the working branch **before opening a pull request**. This includes automated checks on the pushed branch and controlled Home Assistant runtime tests where practical. Do not perform live SMS operations without explicit authorization.
+
+If validation reveals a problem, fix it on the **same working branch**, push the correction, and repeat the relevant tests. Do not open a pull request while known in-scope failures remain unresolved. If a test cannot be performed safely or practically, document that limitation explicitly rather than claiming it passed.
+
 ### 4. Commit and push
 
 Use clear, concise commit messages in English.
@@ -190,7 +194,7 @@ Push the working branch to GitHub. Do not push directly to `main` or `develop`.
 
 ### 5. Open a pull request to `develop`
 
-Open a pull request from the short-lived working branch into `develop`.
+Open a pull request from the short-lived working branch into `develop` **only after completing the applicable pre-PR validation** and resolving known in-scope failures. A pull request is for reviewing and integrating a change that is ready, not for beginning its initial testing.
 
 Describe:
 
