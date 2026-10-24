@@ -4,7 +4,22 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "custom_components"))
-from zte_sms.encoding import decode_sms_hex
+
+import importlib.util
+from pathlib import Path
+
+encoding_path = (
+    Path(__file__).resolve().parents[1]
+    / "custom_components"
+    / "zte_sms"
+    / "encoding.py"
+)
+
+spec = importlib.util.spec_from_file_location("zte_sms_encoding", encoding_path)
+encoding = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(encoding)
+
+decode_sms_hex = encoding.decode_sms_hex
 
 
 class DecodeSmsHexTests(unittest.TestCase):
