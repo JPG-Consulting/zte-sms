@@ -1,48 +1,300 @@
-# AGENTS.md — guidance for AI coding agents
+# AGENTS.md — Guidance for AI Coding Agents
+
+## Purpose
+
+This file provides instructions for AI coding agents working on the ZTE SMS project.
+
+**English is the primary language of the repository.** Source code, comments, documentation, commit messages, issues, and pull requests must use English. Home Assistant user-facing translations may use other languages.
+
+Before proposing or implementing changes, read:
+
+1. [README.md](README.md) — project overview, installation, and current functionality.
+2. [TODO.md](TODO.md) — milestones, priorities, and outstanding work.
+3. [Architecture](docs/architecture.md) — current implementation and architectural boundaries.
+4. [CONTRIBUTING.md](CONTRIBUTING.md) — Git workflow and contribution requirements.
+5. [MF833U1 HTTP API findings](docs/api/mf833u1.md) — observed modem API behavior.
+6. [Compatibility](docs/compatibility.md) — verified device support.
+7. [Research log](docs/research-log.md) — experimental findings and history.
+8. [Architecture decisions](docs/decisions/0001-custom-integration.md) — recorded technical decisions.
+
+Inspect the current source code and tests before relying on documentation summaries.
+
+Do not duplicate detailed technical documentation in this file. Refer to the authoritative document for each topic.
 
 ## Project state
 
-This repository is an **exploratory scaffold**, not a working Home Assistant integration. Start by reading `README.md`, `docs/research-log.md`, and `docs/api/mf833u1.md`. Never present a hypothesized API behavior as tested.
+ZTE SMS is an **early-development, functional Home Assistant custom integration**, initially targeting the ZTE MF833U1.
 
-## Non-negotiable constraints
+Implemented and tested capabilities include:
 
-1. **Protect LTE fallback.** The MF833U1 currently provides working LTE failover through a MikroTik hEX S. Do not change USB mode, firmware, APN, routing, modem configuration, or network settings as part of SMS development.
-2. **No unapproved side effects.** Do not send, delete, mark-read, or otherwise mutate SMS on a live modem without explicit user permission. Default tests must use mocks/fixtures.
-3. **Protect private data.** Never commit real phone numbers, SMS text, device credentials, session cookies, or tokens. Redact diagnostics. Never log full message bodies by default.
-4. **Separate evidence from assumptions.** Record each finding as verified, observed-but-not-explained, or unverified. Include exact reproduction conditions.
-5. **Respect Home Assistant conventions.** Before implementing, check current Home Assistant developer guidance for config flows, coordinators, entities, events/actions, translations, and HACS metadata.
-6. **Keep scope modest.** Implement reliable, read-only SMS retrieval first; only then new-message detection, and later sending after API verification.
+- Configuration through the Home Assistant UI.
+- Configurable modem host and default SMS recipients.
+- Sending SMS using the `zte_sms.send_sms` action.
+- Sending SMS to configured recipients using the `notify.zte_sms` notification entity.
+- UTF-16BE hexadecimal encoding with `encode_type=UNICODE`, successfully preserving tested Spanish accented characters and `ñ`.
 
-## Verified evidence to preserve
+The action `zte_sms.send_sms` currently accepts one destination number per call. The notification entity sends messages individually to each configured default recipient.
 
-- Modem: ZTE MF833U1, UI at `http://192.168.0.1/index.html#sms`.
-- The browser UI can receive and display SMS.
-- GET `goform_get_cmd_process` with `cmd=sms_data_total` and additional pagination/filter parameters returns JSON `messages` in Postman **when the request has `Referer: http://192.168.0.1/index.html`**.
-- The same Postman query without that Referer returned `{ "sms_data_total": "" }`.
-- Message `content` is UTF-16 big-endian code units represented as hex; test using synthetic fixtures.
-- For multiple state commands, `multi_data=1` was required for a correctly split response.
+A successful modem API response indicates acceptance of a sending request, **not independently verified delivery**.
 
-## Workflow for any change
+The integration is not yet production-ready. Automated checks do not establish compatibility with every Home Assistant release, ZTE firmware, or network environment.
 
-1. Read relevant docs and tests.
-2. State what is known versus inferred.
-3. Add tests with sanitized data and no live HTTP access.
-4. Implement the smallest change.
-5. Run tests and update documentation, compatibility matrix, and research log when behavior changes.
-6. If a real-device test is necessary, describe it and request explicit approval first.
+### Current limitations
 
-## Suggested next milestones
+The integration does not currently provide:
 
-- Verify HA OS can reach `192.168.0.1` and reproduce the successful GET with Referer.
-- Build a minimal, read-only async API client with request timeout, structured errors, and sanitized logging.
-- Implement message decoding and deduplication across restarts.
-- Implement Home Assistant config flow and entities/events according to current APIs.
-- Investigate SMS sending via captured browser requests, without actually sending until approved.
+- Automatic cleanup of sent SMS.
+- Local SMS archiving or a message viewer.
+- SMS synchronization or automatic incoming-message detection.
+- Periodic inbox polling or cellular signal monitoring.
+- Independently verified delivery confirmation.
+- Comprehensive failure classification and privacy-safe diagnostic logging.
+
+The HTTP client includes on-demand SMS reading functionality, but this is not currently exposed as an incoming-message feature in Home Assistant.
+
+## Development priorities and milestones
+
+### Milestone 1 — Reliable outbound SMS and safe sent-message cleanup
+
+**This is the immediate development priority.**
+
+The goal is fast, robust SMS submission with predictable failure handling and safe management of modem storage occupied by messages generated by this integration.
+
+Work should focus on:
+
+1. Improving SMS submission reliability and error classification.
+2. Preventing duplicate messages caused by automatic retries of uncertain submissions.
+3. Preserving clear error reporting to Home Assistant callers.
+4. Implementing privacy-safe diagnostics.
+5. Investigating whether integration-generated outbound SMS occupy modem storage.
+6. Verifying whether those messages can be identified and deleted safely.
+7. Implementing safe post-submission cleanup only when its safety requirements are proven.
+8. Providing a user option to retain integration-generated messages in modem storage if cleanup is supported.
+9. Completing automated and explicitly authorized real-device testing.
+
+**Critical-path rule:** outbound SMS submission must not wait for inbox synchronization, cellular status checks, local archive writes, or stored-message cleanup.
+
+Cleanup is a separate post-submission operation. Cleanup failure must not trigger automatic resending.
+
+The integration must never delete messages based only on a matching recipient, message body, timestamp, or sent-folder location.
+
+If safe deletion cannot be demonstrated, do not implement speculative deletion. Investigate a safe alternative and document the limitation. Do not claim that modem storage exhaustion has been prevented without evidence.
+
+The first stable release must not be declared complete until the milestone's storage-management limitations have been appropriately resolved and documented.
+
+### Later milestones — Do not implement prematurely
+
+The following are future features, not requirements for Milestone 1:
+
+- Optional local SMS archiving.
+- A Home Assistant message viewer.
+- Manual or automatic SMS synchronization.
+- Incoming SMS entities, events, or automation triggers.
+- On-demand LTE status and signal queries exposed through Home Assistant.
+- Optional periodic cellular monitoring.
+- Broader modem compatibility and distribution improvements.
+
+Local archiving should initially focus on messages sent by the integration. A user-facing archive must include a usable way to view the stored messages.
+
+**On-demand queries and periodic polling are separate capabilities.** An explicit query does not require background polling, while automatic change detection generally requires repeated queries or another verified notification mechanism.
+
+Any future polling must be disabled by default, configurable, and independent of outbound SMS submission.
+
+Do not expand scope into later milestones before the first stable release is validated and merged into `main`, unless the maintainer explicitly changes priorities.
+
+Use [TODO.md](TODO.md) as the authoritative source for current priorities.
+
+## Non-negotiable safety constraints
+
+### 1. Preserve LTE fallback
+
+The ZTE MF833U1 provides LTE Internet fallback through a MikroTik router.
+
+Never modify the router's routing, failover configuration, or network settings as part of this integration.
+
+Do not change the modem's USB mode, firmware, APN, cellular configuration, or other network settings to support SMS functionality.
+
+SMS features must not disrupt the existing Internet connection.
+
+### 2. Prevent unintended SMS operations
+
+Do not send SMS, delete messages, mark messages as read, or otherwise change live modem SMS state without explicit authorization.
+
+Automated tests must use mocks, fixtures, or simulated responses. They must never contact a live modem or send billable messages.
+
+**Never automatically delete received messages, manually sent messages, or messages whose origin cannot be established unambiguously.**
+
+Deleting integration-generated messages may only be considered after proving their origin and obtaining reliable, exact modem message identifiers.
+
+A matching recipient, message body, timestamp, or sent-folder location is not sufficient evidence of ownership.
+
+If safe deletion cannot be guaranteed, do not implement automatic deletion.
+
+### 3. No unsolicited polling
+
+Do not introduce periodic SMS inbox polling by default.
+
+Incoming-message detection, storage monitoring, and cellular signal monitoring must be explicitly enabled by the user if implemented.
+
+Any optional polling must have a documented interval and must be disabled by default.
+
+An on-demand query must not silently start a background polling loop.
+
+Monitoring must not modify the router or the modem's cellular configuration.
+
+### 4. Protect private information
+
+Never commit, publish, or log:
+
+- Real phone numbers in full.
+- SMS message contents.
+- Modem credentials or authentication tokens.
+- Session cookies.
+- Unredacted HTTP request or response dumps containing private data.
+
+Apply these protections to all log levels, including DEBUG.
+
+Use fictional phone numbers and synthetic message content in tests and documentation.
+
+Future local archiving of SMS contents must require explicit user consent and appropriate access-control, retention, and backup safeguards.
+
+### 5. Distinguish evidence from assumptions
+
+The MF833U1 HTTP API is undocumented and may vary by firmware.
+
+Classify technical findings as:
+
+- **Verified:** reproduced with documented evidence.
+- **Observed but not fully explained:** seen during testing, with uncertain interpretation.
+- **Unverified:** inferred, proposed, or not yet tested.
+
+Never describe hypothetical modem behavior as a verified capability.
+
+Record relevant findings in the existing research or API documentation.
+
+## Existing technical evidence
+
+The repository already documents several important observations:
+
+- The modem's web interface is accessible at `http://192.168.0.1/index.html#sms` in the tested environment.
+- The SMS inbox can be queried through `goform_get_cmd_process`.
+- In the successful Postman inbox test, the `Referer` header was required.
+- SMS message content is represented as UTF-16BE hexadecimal data.
+- Sending uses `goform_set_cmd_process` with `goformId=SEND_SMS`.
+- `encode_type=UNICODE` preserved the tested accented characters.
+- Some multi-command status requests require `multi_data=1`.
+
+The complete endpoints, request parameters, examples, and evidence are maintained in [docs/api/mf833u1.md](docs/api/mf833u1.md).
+
+Do not reproduce those details here or assume they apply to other ZTE models.
+
+## Architecture and implementation boundaries
+
+The integration is implemented in `custom_components/zte_sms`.
+
+Current responsibilities include:
+
+- `config_flow.py`: configuration and options flows.
+- `client.py`: communication with the modem HTTP API.
+- `__init__.py`: integration setup and the `zte_sms.send_sms` action.
+- `notify.py`: Home Assistant notification entity.
+- `const.py`: shared constants.
+
+Maintain clear separation between modem communication and Home Assistant-specific functionality.
+
+Prefer Home Assistant's supported APIs and conventions. Verify compatibility with the Home Assistant version being targeted.
+
+Do not introduce unnecessary dependencies, background services, or periodic tasks.
+
+Future storage management must not block the critical SMS submission path.
+
+The existing architecture documentation must remain consistent with implemented behavior.
+
+## Error handling and diagnostics
+
+When improving error handling:
+
+- Distinguish confirmed failures from uncertain outcomes.
+- Do not automatically retry SMS submissions when doing so could produce duplicate messages.
+- Preserve actionable failures for Home Assistant callers, even when logging is disabled.
+- Never interpret modem acceptance as proof of delivery.
+- Use appropriate diagnostic logging levels without exposing sensitive information.
+- Prefer Home Assistant's native logging configuration unless a project requirement justifies additional controls.
+- Treat post-submission cleanup failures separately from SMS submission outcomes.
+
+For notifications with multiple recipients, consider partial success: earlier recipients may have received an SMS before a later submission fails.
+
+## Development workflow
+
+The project is transitioning to a branch-based contribution workflow.
+
+Until that transition is completed, follow the repository's current documented process.
+
+Once the `develop` branch and branch protections are established, use the workflow defined in [CONTRIBUTING.md](CONTRIBUTING.md):
+
+- `main`: tested, release-ready code.
+- `develop`: integration branch for changes under development.
+- `feature/...`: new functionality.
+- `fix/...`: bug fixes.
+- `docs/...`: documentation changes.
+- `test/...`: test-related changes.
+
+Changes should be proposed through pull requests. Do not push directly to protected branches.
+
+Treat `CONTRIBUTING.md` as the authoritative source for branching, pull request, review, and merge requirements.
+
+## Workflow for each change
+
+1. Read the relevant documentation, source files, and tests.
+2. Identify what is verified, assumed, and still unknown.
+3. Select one small, well-defined change from the current milestone.
+4. Describe expected behavior, performance implications, and safety risks.
+5. Add or update tests using synthetic data and no live modem access.
+6. Implement the change while preserving existing functionality.
+7. Run available automated checks.
+8. Identify tests that require real Home Assistant or modem hardware.
+9. Request authorization before any live SMS operation or other state-changing test.
+10. Update the relevant documentation and task tracking when appropriate.
+
+A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of real-device compatibility.
+
+## Collaboration with the project maintainer
+
+Prefer incremental changes that can be reviewed and tested independently.
+
+When supplying a file for manual replacement, provide its complete contents rather than an isolated patch, unless the maintainer requests otherwise.
+
+Do not assume the maintainer has a local Python development environment. The project may be edited locally and committed and pushed using GitHub Desktop, with automated validation through GitHub Actions.
+
+Do not claim that code was tested on actual hardware unless such testing has been performed.
+
+Do not send test SMS without explicit approval.
 
 ## Review checklist
 
-- No sensitive data in fixtures, logs, screenshots, or docs.
-- No implicit live-device requests in unit tests.
-- No destructive actions.
-- No unsupported compatibility claims.
-- No breaking changes to LTE fallback.
+Before considering a change complete, confirm:
+
+- No sensitive information is exposed.
+- No unintended live modem operations occur.
+- No SMS is deleted without verified ownership and exact identification.
+- No unsolicited polling has been introduced.
+- Outbound SMS submission is not delayed by nonessential operations.
+- LTE fallback and router configuration remain untouched.
+- Home Assistant failures are not silently hidden.
+- Automated tests are passing where applicable.
+- Required manual tests are documented or completed.
+- Documentation matches the implementation.
+- No future functionality is presented as already implemented.
+- No unsupported device-compatibility claims have been added.
+
+## Further documentation
+
+- [Project overview](README.md)
+- [Milestones and tasks](TODO.md)
+- [Contributing and Git workflow](CONTRIBUTING.md)
+- [Architecture](docs/architecture.md)
+- [Compatibility](docs/compatibility.md)
+- [MF833U1 HTTP API](docs/api/mf833u1.md)
+- [Research log](docs/research-log.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Architecture decisions](docs/decisions/0001-custom-integration.md)
