@@ -19,7 +19,8 @@
       "invalid_phone_number": "Introduce números de teléfono válidos en formato internacional, comenzando por +."
     },
     "abort": {
-      "already_configured": "Este módem ya está configurado."
+      "already_configured": "Este módem ya está configurado.",
+      "single_instance_allowed": "Solo se puede configurar un módem ZTE SMS por instalación de Home Assistant."
     }
   },
   "options": {
