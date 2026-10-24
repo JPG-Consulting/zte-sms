@@ -15,5 +15,21 @@
     "abort": {
       "already_configured": "This modem is already configured."
     }
+  },
+  "services": {
+    "send_sms": {
+      "name": "Send SMS",
+      "description": "Send an SMS using the ZTE modem.",
+      "fields": {
+        "number": {
+          "name": "Phone number",
+          "description": "Destination phone number in international format."
+        },
+        "message": {
+          "name": "Message",
+          "description": "Text of the SMS to send."
+        }
+      }
+    }
   }
 }

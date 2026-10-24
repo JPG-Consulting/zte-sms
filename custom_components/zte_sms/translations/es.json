@@ -15,5 +15,21 @@
     "abort": {
       "already_configured": "Este módem ya está configurado."
     }
+  },
+  "services": {
+    "send_sms": {
+      "name": "Enviar SMS",
+      "description": "Envía un SMS utilizando el módem ZTE.",
+      "fields": {
+        "number": {
+          "name": "Número de teléfono",
+          "description": "Número de destino en formato internacional."
+        },
+        "message": {
+          "name": "Mensaje",
+          "description": "Texto del SMS que se enviará."
+        }
+      }
+    }
   }
 }
