@@ -13,6 +13,7 @@ from .client import ZTEClient
 from .const import DOMAIN
 
 SERVICE_SEND_SMS = "send_sms"
+PLATFORMS = ["notify"]
 
 SEND_SMS_SCHEMA = vol.Schema(
     {
@@ -57,6 +58,11 @@ async def async_setup_entry(
             schema=SEND_SMS_SCHEMA,
         )
 
+    await hass.config_entries.async_forward_entry_setups(
+        entry,
+        PLATFORMS,
+    )
+
     return True
 
 
@@ -65,6 +71,12 @@ async def async_unload_entry(
     entry: ConfigEntry,
 ) -> bool:
     """Unload a ZTE SMS config entry."""
+    if not await hass.config_entries.async_unload_platforms(
+        entry,
+        PLATFORMS,
+    ):
+        return False
+
     hass.data[DOMAIN].pop(entry.entry_id, None)
 
     if not hass.data[DOMAIN]:
