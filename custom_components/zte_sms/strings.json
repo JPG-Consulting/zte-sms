@@ -1,0 +1,19 @@
+
+{
+  "title": "ZTE SMS",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to ZTE modem",
+        "description": "Enter the IP address of your ZTE modem.",
+        "data": {
+          "host": "Modem IP address"
+        }
+      }
+    },
+    "error": {},
+    "abort": {
+      "already_configured": "This modem is already configured."
+    }
+  }
+}

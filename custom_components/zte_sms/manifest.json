@@ -1,0 +1,12 @@
+
+{
+  "domain": "zte_sms",
+  "name": "ZTE SMS",
+  "version": "0.1.0",
+  "documentation": "https://github.com/JPG-Consulting/zte-sms",
+  "issue_tracker": "https://github.com/JPG-Consulting/zte-sms/issues",
+  "codeowners": ["@JPG-Consulting"],
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "requirements": []
+}
