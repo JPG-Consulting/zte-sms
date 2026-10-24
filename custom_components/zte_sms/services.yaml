@@ -1,0 +1,20 @@
+
+send_sms:
+  name: Send SMS
+  description: Send an SMS using the ZTE modem.
+  fields:
+    number:
+      name: Phone number
+      description: Destination phone number in international format.
+      required: true
+      example: "+34600000000"
+      selector:
+        text:
+    message:
+      name: Message
+      description: Text of the SMS to send.
+      required: true
+      example: "Test from Home Assistant"
+      selector:
+        text:
+          multiline: true
