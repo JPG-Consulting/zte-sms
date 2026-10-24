@@ -22,6 +22,23 @@
       "already_configured": "This modem is already configured."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Default SMS recipients",
+        "description": "Manage the phone numbers that will receive SMS notifications. You can leave the list empty.",
+        "data": {
+          "recipients": "Phone numbers"
+        },
+        "data_description": {
+          "recipients": "Add or remove phone numbers in international format, for example +34611111111."
+        }
+      }
+    },
+    "error": {
+      "invalid_phone_number": "Enter valid phone numbers in international format, starting with +."
+    }
+  },
   "services": {
     "send_sms": {
       "name": "Send SMS",

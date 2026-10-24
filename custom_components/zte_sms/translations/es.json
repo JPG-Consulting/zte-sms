@@ -22,6 +22,23 @@
       "already_configured": "Este módem ya está configurado."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Destinatarios predeterminados de SMS",
+        "description": "Gestiona los números de teléfono que recibirán las notificaciones SMS. Puedes dejar la lista vacía.",
+        "data": {
+          "recipients": "Números de teléfono"
+        },
+        "data_description": {
+          "recipients": "Añade o elimina números de teléfono en formato internacional, por ejemplo +34611111111."
+        }
+      }
+    },
+    "error": {
+      "invalid_phone_number": "Introduce números de teléfono válidos en formato internacional, comenzando por +."
+    }
+  },
   "services": {
     "send_sms": {
       "name": "Enviar SMS",
