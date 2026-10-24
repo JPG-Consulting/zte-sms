@@ -5,13 +5,19 @@
     "step": {
       "user": {
         "title": "Conectar con el módem ZTE",
-        "description": "Introduce la dirección IP de tu módem ZTE.",
+        "description": "Introduce la dirección IP del módem y, opcionalmente, los destinatarios predeterminados de los SMS.",
         "data": {
-          "host": "Dirección IP del módem"
+          "host": "Dirección IP del módem",
+          "recipients": "Números de teléfono predeterminados"
+        },
+        "data_description": {
+          "recipients": "Añade uno o varios números de teléfono en formato internacional, por ejemplo +34611111111."
         }
       }
     },
-    "error": {},
+    "error": {
+      "invalid_phone_number": "Introduce números de teléfono válidos en formato internacional, comenzando por +."
+    },
     "abort": {
       "already_configured": "Este módem ya está configurado."
     }

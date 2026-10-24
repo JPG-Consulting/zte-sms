@@ -5,13 +5,19 @@
     "step": {
       "user": {
         "title": "Connect to ZTE modem",
-        "description": "Enter the IP address of your ZTE modem.",
+        "description": "Enter the modem IP address and, optionally, the default SMS recipients.",
         "data": {
-          "host": "Modem IP address"
+          "host": "Modem IP address",
+          "recipients": "Default phone numbers"
+        },
+        "data_description": {
+          "recipients": "Add one or more phone numbers in international format, for example +34611111111."
         }
       }
     },
-    "error": {},
+    "error": {
+      "invalid_phone_number": "Enter valid phone numbers in international format, starting with +."
+    },
     "abort": {
       "already_configured": "This modem is already configured."
     }
