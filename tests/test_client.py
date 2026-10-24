@@ -5,7 +5,12 @@ import unittest
 from unittest.mock import patch
 from urllib.parse import parse_qs
 
-from zte_client import ZTEClient, ZTEAPIError, decode_sms, encode_sms, sms_timestamp
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "custom_components" / "zte_sms"))
+
+from client import ZTEClient, ZTEAPIError, decode_sms, encode_sms, sms_timestamp
 
 
 class ClientTests(unittest.TestCase):
