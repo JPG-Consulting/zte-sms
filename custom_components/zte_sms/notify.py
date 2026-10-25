@@ -11,7 +11,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import ZTEClient, ZTESMSOutcomeUnknownError
-from .const import CONF_BATCH_SIZE, DEFAULT_BATCH_SIZE, DOMAIN
+from .const import (
+    CONF_BATCH_SIZE,
+    DEFAULT_BATCH_SIZE,
+    DOMAIN,
+    MAX_BATCH_SIZE,
+    MIN_BATCH_SIZE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,6 +98,15 @@ class ZTESMSNotifyEntity(NotifyEntity):
         unknown_numbers: list[str] = []
 
         batch_size = self._entry.options.get(CONF_BATCH_SIZE, DEFAULT_BATCH_SIZE)
+        if (
+            type(batch_size) is not int
+            or not MIN_BATCH_SIZE <= batch_size <= MAX_BATCH_SIZE
+        ):
+            _LOGGER.warning(
+                "Invalid SMS batch size configuration; using default value %d",
+                DEFAULT_BATCH_SIZE,
+            )
+            batch_size = DEFAULT_BATCH_SIZE
 
         for start in range(0, len(recipients), batch_size):
             if start:
