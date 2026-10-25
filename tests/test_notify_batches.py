@@ -202,6 +202,49 @@ class BatchTests(unittest.TestCase):
         self.assertEqual(len(captured.output), 2)
         self.assertNotIn(self.numbers[0], " ".join(captured.output))
 
+    def test_concurrent_notifications_can_interleave(self):
+        """Characterize current behavior with two overlapping notifications."""
+        async def scenario():
+            first_started = asyncio.Event()
+            release_first = asyncio.Event()
+            calls = []
+
+            async def send_sms(number, message):
+                calls.append((message, number))
+                if message == "A" and number == self.numbers[0]:
+                    first_started.set()
+                    await release_first.wait()
+                return True
+
+            entry = types.SimpleNamespace(
+                entry_id="entry-1",
+                data={"recipients": self.numbers[:2]},
+                options={"batch_size": 2},
+            )
+            entity = self.module.ZTESMSNotifyEntity(
+                entry, types.SimpleNamespace(send_sms=send_sms)
+            )
+            first = asyncio.create_task(entity.async_send_message("A"))
+            await asyncio.wait_for(first_started.wait(), timeout=1)
+            second = asyncio.create_task(entity.async_send_message("B"))
+            try:
+                await asyncio.wait_for(second, timeout=1)
+            finally:
+                release_first.set()
+                await first
+            return calls
+
+        calls = asyncio.run(scenario())
+        self.assertEqual(
+            calls,
+            [
+                ("A", self.numbers[0]),
+                ("B", self.numbers[0]),
+                ("B", self.numbers[1]),
+                ("A", self.numbers[1]),
+            ],
+        )
+
     def test_empty_recipients(self):
         with self.assertRaisesRegex(ValueError, "No default SMS recipients"):
             self.run_send(self.make_entity(count=0))
