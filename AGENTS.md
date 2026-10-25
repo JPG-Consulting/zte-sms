@@ -259,13 +259,14 @@ Treat [CONTRIBUTING.md](CONTRIBUTING.md) as the authoritative source for branchi
 5. Add or update tests using synthetic data and no live modem access.
 6. Implement the change while preserving existing functionality.
 7. Commit and push the working branch, then verify the available automated checks on that branch.
-8. Identify and complete applicable controlled Home Assistant runtime tests before opening a pull request, where practical.
+8. Before declaring a branch ready for a pull request, test every change that may affect Home Assistant behavior in a running Home Assistant installation (including configuration, options forms, UI, entities, actions, translations, setup, and reload). Automated tests and green CI do not replace this minimum runtime validation.
+   For any change that may affect SMS submission, additionally perform authorized real-SMS tests using the modem, covering changed behavior and relevant regressions. Obtain the maintainer's explicit authorization before each live testing session. If required testing is not completed, mark the branch as pending validation, not ready for a pull request.
 9. Request explicit authorization before any live SMS operation or other state-changing modem test.
 10. If validation fails, fix the problem on the same working branch and repeat the relevant checks. Document any tests that cannot safely or practically be performed.
 11. Update the relevant documentation and task tracking when appropriate.
 12. Prepare the working branch for maintainer review after applicable pre-PR validation is complete and known in-scope failures have been resolved. The maintainer creates the pull request to `develop` and decides when to merge; AI agents must not create or merge pull requests without a separate explicit change to this agreement.
 
-A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of real-device compatibility. A pull request is the final review and integration step, not the start of initial validation.
+A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of Home Assistant runtime compatibility or real-device SMS behavior. Do not describe a change as PR-ready while required Home Assistant or authorized modem tests remain outstanding. A pull request is the final review and integration step, not the start of initial validation.
 
 ## Collaboration with the project maintainer
 
@@ -291,7 +292,8 @@ Before considering a change complete, confirm:
 - LTE fallback and router configuration remain untouched.
 - Home Assistant failures are not silently hidden.
 - Automated tests are passing where applicable.
-- Required manual tests are documented or completed.
+- All applicable Home Assistant runtime tests have been completed before PR readiness.
+- All applicable real-SMS tests have been explicitly authorized and completed before PR readiness.
 - Documentation matches the implementation.
 - No future functionality is presented as already implemented.
 - No unsupported device-compatibility claims have been added.
