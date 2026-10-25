@@ -10,10 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import ZTEClient, ZTESMSOutcomeUnknownError
-from .const import DOMAIN
-
-# Until the options flow exposes the setting, use the agreed default.
-DEFAULT_BATCH_SIZE = 5
+from .const import CONF_BATCH_SIZE, DEFAULT_BATCH_SIZE, DOMAIN
 
 
 @dataclass
@@ -91,11 +88,13 @@ class ZTESMSNotifyEntity(NotifyEntity):
         rejected_numbers: list[str] = []
         unknown_numbers: list[str] = []
 
-        for start in range(0, len(recipients), DEFAULT_BATCH_SIZE):
+        batch_size = self._entry.options.get(CONF_BATCH_SIZE, DEFAULT_BATCH_SIZE)
+
+        for start in range(0, len(recipients), batch_size):
             if start:
                 await self._between_batches()
 
-            for number in recipients[start : start + DEFAULT_BATCH_SIZE]:
+            for number in recipients[start : start + batch_size]:
                 try:
                     await self._client.send_sms(number, message)
                 except ValueError:
