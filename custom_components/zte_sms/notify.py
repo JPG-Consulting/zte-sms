@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 
 from homeassistant.components.notify import NotifyEntity
 from homeassistant.config_entries import ConfigEntry
@@ -11,6 +12,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import ZTEClient, ZTESMSOutcomeUnknownError
 from .const import CONF_BATCH_SIZE, DEFAULT_BATCH_SIZE, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -92,7 +95,13 @@ class ZTESMSNotifyEntity(NotifyEntity):
 
         for start in range(0, len(recipients), batch_size):
             if start:
-                await self._between_batches()
+                try:
+                    await self._between_batches()
+                except Exception:
+                    # Maintenance failures must not interrupt SMS submissions.
+                    _LOGGER.warning(
+                        "ZTE SMS maintenance between batches failed; continuing",
+                    )
 
             for number in recipients[start : start + batch_size]:
                 try:
