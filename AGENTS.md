@@ -28,12 +28,12 @@ ZTE SMS is an **early-development, functional Home Assistant custom integration*
 Implemented and tested capabilities include:
 
 - Configuration through the Home Assistant UI.
-- Configurable modem host and default SMS recipients.
+- Configurable modem host, default SMS recipients, and notification batch size (1–5; default 5).
 - Sending SMS using the `zte_sms.send_sms` action.
 - Sending SMS to configured recipients using the `notify.zte_sms` notification entity.
 - UTF-16BE hexadecimal encoding with `encode_type=UNICODE`, successfully preserving tested Spanish accented characters and `ñ`.
 
-The action `zte_sms.send_sms` currently accepts one destination number per call. The notification entity sends messages individually to each configured default recipient.
+The action `zte_sms.send_sms` currently accepts one destination number per call. The notification entity sends messages individually to configured default recipients in sequential batches, continues after individual submission failures, and reports aggregate success, partial failure, or complete failure. Unknown submission outcomes are not proof of non-delivery; no automatic retries are performed.
 
 A successful modem API response indicates acceptance of a sending request, **not independently verified delivery**.
 
@@ -48,7 +48,7 @@ The integration does not currently provide:
 - SMS synchronization or automatic incoming-message detection.
 - Periodic inbox polling or cellular signal monitoring.
 - Independently verified delivery confirmation.
-- Comprehensive failure classification and privacy-safe diagnostic logging.
+- Comprehensive diagnostic coverage beyond the current notification-outcome classification and privacy-safe submission logs.
 
 The HTTP client includes on-demand SMS reading functionality, but this is not currently exposed as an incoming-message feature in Home Assistant.
 
@@ -222,7 +222,7 @@ When improving error handling:
 - Prefer Home Assistant's native logging configuration unless a project requirement justifies additional controls.
 - Treat post-submission cleanup failures separately from SMS submission outcomes.
 
-For notifications with multiple recipients, consider partial success: earlier recipients may have received an SMS before a later submission fails.
+For notifications with multiple recipients, preserve sequential batch processing, continued attempts after individual failures, and aggregate reporting of accepted, rejected, and unknown outcomes. Partial success is implemented: earlier recipients may have received an SMS before a later submission fails. Keep diagnostic logs free of phone numbers, SMS contents, and raw exception details.
 
 ## Development workflow
 
@@ -263,13 +263,13 @@ Treat [CONTRIBUTING.md](CONTRIBUTING.md) as the authoritative source for branchi
 9. Request explicit authorization before any live SMS operation or other state-changing modem test.
 10. If validation fails, fix the problem on the same working branch and repeat the relevant checks. Document any tests that cannot safely or practically be performed.
 11. Update the relevant documentation and task tracking when appropriate.
-12. Open a pull request to `develop` only after the applicable pre-PR validation is complete and known in-scope failures have been resolved.
+12. Prepare the working branch for maintainer review after applicable pre-PR validation is complete and known in-scope failures have been resolved. The maintainer creates the pull request to `develop` and decides when to merge; AI agents must not create or merge pull requests without a separate explicit change to this agreement.
 
 A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of real-device compatibility. A pull request is the final review and integration step, not the start of initial validation.
 
 ## Collaboration with the project maintainer
 
-Prefer incremental changes that can be reviewed and tested independently.
+Prefer incremental changes that can be reviewed and tested independently. Work one step at a time, obtain the maintainer's approval before making each agreed change, and ask clarifying questions rather than assuming ambiguous requirements or design decisions. Do not create or merge pull requests on the maintainer's behalf.
 
 When supplying a file for manual replacement, provide its complete contents rather than an isolated patch, unless the maintainer requests otherwise.
 
