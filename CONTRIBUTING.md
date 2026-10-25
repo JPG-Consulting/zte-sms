@@ -208,6 +208,18 @@ Wait for the required GitHub Actions checks to pass before merging.
 
 Do not merge a change that fails required checks.
 
+### Merge method for working branches
+
+**Squash and merge is the default** for pull requests from short-lived working branches into `develop`. Each branch should represent one logical change, even if several intermediate commits are needed during development and validation.
+
+Before confirming the squash, review and edit the final commit title and extended description. They should summarize the completed change, relevant validation, and important limitations rather than merely reproducing the list of intermediate commit messages. This keeps the `develop` history focused and readable.
+
+Exceptions are permitted when there is a documented technical reason to preserve individual commits or use a different merge method. Explain the justification in the pull request before merging; do not treat an exception as a new default.
+
+The maintainer chooses and performs the merge. AI coding agents must not create or merge pull requests on the maintainer's behalf without a separate explicit change to that agreement.
+
+This default applies to working-branch pull requests targeting `develop`. Pull requests from `develop` into `main` follow the release workflow; their merge strategy may be defined separately.
+
 ### 6. Integrate validated changes into `main`
 
 After changes have been integrated and validated on `develop`, open a pull request from `develop` into `main` when preparing a stable release.
