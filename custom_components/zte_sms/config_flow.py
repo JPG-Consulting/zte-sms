@@ -31,6 +31,13 @@ def validate_recipients(recipients: list[str]) -> list[str]:
     return list(dict.fromkeys(numbers))
 
 
+def validate_batch_size(value: int) -> int:
+    """Accept only integer batch sizes within the supported range."""
+    if type(value) is not int or not MIN_BATCH_SIZE <= value <= MAX_BATCH_SIZE:
+        raise vol.Invalid("invalid_batch_size")
+    return value
+
+
 def recipients_schema(default: list[str] | None = None):
     """Build the recipient selector."""
     return vol.Optional(
@@ -122,12 +129,16 @@ class ZTESMSOptionsFlow(config_entries.OptionsFlow):
                 )
             except ValueError:
                 errors["base"] = "invalid_phone_number"
-            else:
+            try:
+                batch_size = validate_batch_size(user_input.get(CONF_BATCH_SIZE))
+            except vol.Invalid:
+                errors[CONF_BATCH_SIZE] = "invalid_batch_size"
+            if not errors:
                 return self.async_create_entry(
                     title="",
                     data={
                         "recipients": recipients,
-                        CONF_BATCH_SIZE: user_input[CONF_BATCH_SIZE],
+                        CONF_BATCH_SIZE: batch_size,
                     },
                 )
 
@@ -149,10 +160,7 @@ class ZTESMSOptionsFlow(config_entries.OptionsFlow):
                         if user_input is not None
                         else current_batch_size
                     ),
-                ): vol.All(
-                    vol.Coerce(int),
-                    vol.Range(min=MIN_BATCH_SIZE, max=MAX_BATCH_SIZE),
-                ),
+                ): validate_batch_size,
                 recipients_schema(
                     user_input.get("recipients", current_recipients)
                     if user_input
