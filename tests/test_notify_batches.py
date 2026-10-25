@@ -202,8 +202,8 @@ class BatchTests(unittest.TestCase):
         self.assertEqual(len(captured.output), 2)
         self.assertNotIn(self.numbers[0], " ".join(captured.output))
 
-    def test_concurrent_notifications_can_interleave(self):
-        """Characterize current behavior with two overlapping notifications."""
+    def test_concurrent_notifications_are_serialized(self):
+        """A second notification waits for the first batch operation."""
         async def scenario():
             first_started = asyncio.Event()
             release_first = asyncio.Event()
@@ -222,16 +222,15 @@ class BatchTests(unittest.TestCase):
                 options={"batch_size": 2},
             )
             entity = self.module.ZTESMSNotifyEntity(
-                entry, types.SimpleNamespace(send_sms=send_sms)
+                entry, types.SimpleNamespace(send_sms=send_sms, sms_lock=asyncio.Lock())
             )
             first = asyncio.create_task(entity.async_send_message("A"))
             await asyncio.wait_for(first_started.wait(), timeout=1)
             second = asyncio.create_task(entity.async_send_message("B"))
-            try:
-                await asyncio.wait_for(second, timeout=1)
-            finally:
-                release_first.set()
-                await first
+            await asyncio.sleep(0)
+            self.assertEqual(calls, [("A", self.numbers[0])])
+            release_first.set()
+            await asyncio.wait_for(asyncio.gather(first, second), timeout=1)
             return calls
 
         calls = asyncio.run(scenario())
@@ -239,9 +238,9 @@ class BatchTests(unittest.TestCase):
             calls,
             [
                 ("A", self.numbers[0]),
+                ("A", self.numbers[1]),
                 ("B", self.numbers[0]),
                 ("B", self.numbers[1]),
-                ("A", self.numbers[1]),
             ],
         )
 
