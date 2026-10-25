@@ -1,15 +1,50 @@
-
 """SMS notification entity for ZTE SMS."""
 
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 from homeassistant.components.notify import NotifyEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .client import ZTEClient
+from .client import ZTEClient, ZTESMSOutcomeUnknownError
 from .const import DOMAIN
+
+# Until the options flow exposes the setting, use the agreed default.
+DEFAULT_BATCH_SIZE = 5
+
+
+@dataclass
+class SMSBatchResult:
+    """Results for a single multi-recipient notification operation."""
+
+    total: int = 0
+    accepted: int = 0
+    rejected: int = 0
+    unknown: int = 0
+
+    @property
+    def status(self) -> str:
+        """Classify the complete operation by confirmed modem acceptance."""
+        if self.accepted == self.total:
+            return "success"
+        if self.accepted == 0:
+            return "complete_failure"
+        return "partial_failure"
+
+
+class SMSBatchError(RuntimeError):
+    """One or more recipients lacked confirmed SMS acceptance."""
+
+    def __init__(self, result: SMSBatchResult) -> None:
+        """Expose counts without leaking phone numbers or message contents."""
+        self.result = result
+        super().__init__(
+            f"ZTE SMS {result.status}: {result.accepted}/{result.total} accepted, "
+            f"{result.rejected} rejected, {result.unknown} unknown"
+        )
 
 
 async def async_setup_entry(
@@ -34,12 +69,15 @@ class ZTESMSNotifyEntity(NotifyEntity):
         self._client = client
         self._attr_unique_id = f"{entry.entry_id}_notify"
 
+    async def _between_batches(self) -> None:
+        """Reserved for future safe modem maintenance; currently a no-op."""
+
     async def async_send_message(
         self,
         message: str,
         title: str | None = None,
     ) -> None:
-        """Send an SMS to every configured default recipient."""
+        """Send sequential batches, continuing after individual SMS failures."""
         recipients = self._entry.options.get(
             "recipients",
             self._entry.data.get("recipients", []),
@@ -48,5 +86,32 @@ class ZTESMSNotifyEntity(NotifyEntity):
         if not recipients:
             raise ValueError("No default SMS recipients configured")
 
-        for number in recipients:
-            await self._client.send_sms(number, message)
+        result = SMSBatchResult(total=len(recipients))
+        # These lists exist only for this operation; never log their contents.
+        rejected_numbers: list[str] = []
+        unknown_numbers: list[str] = []
+
+        for start in range(0, len(recipients), DEFAULT_BATCH_SIZE):
+            if start:
+                await self._between_batches()
+
+            for number in recipients[start : start + DEFAULT_BATCH_SIZE]:
+                try:
+                    await self._client.send_sms(number, message)
+                except ValueError:
+                    # Validation happens before the modem request.
+                    result.rejected += 1
+                    rejected_numbers.append(number)
+                except ZTESMSOutcomeUnknownError:
+                    result.unknown += 1
+                    unknown_numbers.append(number)
+                except Exception:
+                    # Unexpected failures must not stop remaining recipients.
+                    # Their submission outcome cannot be assumed.
+                    result.unknown += 1
+                    unknown_numbers.append(number)
+                else:
+                    result.accepted += 1
+
+        if result.status != "success":
+            raise SMSBatchError(result)
