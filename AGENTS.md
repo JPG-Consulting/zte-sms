@@ -28,12 +28,12 @@ ZTE SMS is an **early-development, functional Home Assistant custom integration*
 Implemented and tested capabilities include:
 
 - Configuration through the Home Assistant UI.
-- Configurable modem host and default SMS recipients.
+- Configurable modem host, default SMS recipients, and notification batch size (1–5; default 5).
 - Sending SMS using the `zte_sms.send_sms` action.
 - Sending SMS to configured recipients using the `notify.zte_sms` notification entity.
 - UTF-16BE hexadecimal encoding with `encode_type=UNICODE`, successfully preserving tested Spanish accented characters and `ñ`.
 
-The action `zte_sms.send_sms` currently accepts one destination number per call. The notification entity sends messages individually to each configured default recipient.
+The action `zte_sms.send_sms` currently accepts one destination number per call. The notification entity sends messages individually to configured default recipients in sequential batches, continues after individual submission failures, and reports aggregate success, partial failure, or complete failure. Unknown submission outcomes are not proof of non-delivery; no automatic retries are performed.
 
 A successful modem API response indicates acceptance of a sending request, **not independently verified delivery**.
 
@@ -48,7 +48,7 @@ The integration does not currently provide:
 - SMS synchronization or automatic incoming-message detection.
 - Periodic inbox polling or cellular signal monitoring.
 - Independently verified delivery confirmation.
-- Comprehensive failure classification and privacy-safe diagnostic logging.
+- Comprehensive diagnostic coverage beyond the current notification-outcome classification and privacy-safe submission logs.
 
 The HTTP client includes on-demand SMS reading functionality, but this is not currently exposed as an incoming-message feature in Home Assistant.
 
@@ -222,26 +222,35 @@ When improving error handling:
 - Prefer Home Assistant's native logging configuration unless a project requirement justifies additional controls.
 - Treat post-submission cleanup failures separately from SMS submission outcomes.
 
-For notifications with multiple recipients, consider partial success: earlier recipients may have received an SMS before a later submission fails.
+For notifications with multiple recipients, preserve sequential batch processing, continued attempts after individual failures, and aggregate reporting of accepted, rejected, and unknown outcomes. Partial success is implemented: earlier recipients may have received an SMS before a later submission fails. Keep diagnostic logs free of phone numbers, SMS contents, and raw exception details.
 
 ## Development workflow
 
-The project is transitioning to a branch-based contribution workflow.
+The repository uses a protected-branch workflow.
 
-Until that transition is completed, follow the repository's current documented process.
+The following branches are published and protected:
 
-Once the `develop` branch and branch protections are established, use the workflow defined in [CONTRIBUTING.md](CONTRIBUTING.md):
+- `main`: validated, release-ready code.
+- `develop`: integration branch for ongoing development.
 
-- `main`: tested, release-ready code.
-- `develop`: integration branch for changes under development.
+Short-lived working branches must normally be created from `develop`:
+
 - `feature/...`: new functionality.
 - `fix/...`: bug fixes.
 - `docs/...`: documentation changes.
 - `test/...`: test-related changes.
+- `refactor/...`: internal restructuring.
+- `chore/...`: maintenance and tooling.
 
-Changes should be proposed through pull requests. Do not push directly to protected branches.
+Changes must be submitted through pull requests. Do not push directly to `main` or `develop`.
 
-Treat `CONTRIBUTING.md` as the authoritative source for branching, pull request, review, and merge requirements.
+Both branches have active GitHub rulesets requiring the `unit` GitHub Actions check to pass, with zero mandatory approving reviews.
+
+The rulesets have been exercised through completed pull requests into `develop`, including the required `unit` checks.
+
+Treat [CONTRIBUTING.md](CONTRIBUTING.md) as the authoritative source for branching, pull request, review, and merge requirements.
+
+For short-lived working branches targeting `develop`, **Squash and merge** is the default. Exceptions require a documented technical justification in the pull request. The final squash commit message must summarize the completed change rather than copy intermediate commit messages. For release pull requests from `develop` to `main`, **Create a merge commit** is the default to preserve the integrated commit history; squash is an exception requiring a documented justification. The maintainer performs merges; agents must not merge pull requests.
 
 ## Workflow for each change
 
@@ -251,16 +260,19 @@ Treat `CONTRIBUTING.md` as the authoritative source for branching, pull request,
 4. Describe expected behavior, performance implications, and safety risks.
 5. Add or update tests using synthetic data and no live modem access.
 6. Implement the change while preserving existing functionality.
-7. Run available automated checks.
-8. Identify tests that require real Home Assistant or modem hardware.
-9. Request authorization before any live SMS operation or other state-changing test.
-10. Update the relevant documentation and task tracking when appropriate.
+7. Commit and push the working branch, then verify the available automated checks on that branch.
+8. Before declaring a branch ready for a pull request, test every change that may affect Home Assistant behavior in a running Home Assistant installation (including configuration, options forms, UI, entities, actions, translations, setup, and reload). Automated tests and green CI do not replace this minimum runtime validation.
+   For any change that may affect SMS submission, additionally perform authorized real-SMS tests using the modem, covering changed behavior and relevant regressions. Obtain the maintainer's explicit authorization before each live testing session. If required testing is not completed, mark the branch as pending validation, not ready for a pull request.
+9. Request explicit authorization before any live SMS operation or other state-changing modem test.
+10. If validation fails, fix the problem on the same working branch and repeat the relevant checks. Document any tests that cannot safely or practically be performed.
+11. Update the relevant documentation and task tracking when appropriate.
+12. Prepare the working branch for maintainer review after applicable pre-PR validation is complete and known in-scope failures have been resolved. The maintainer creates the pull request to `develop` and decides when to merge; AI agents must not create or merge pull requests without a separate explicit change to this agreement.
 
-A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of real-device compatibility.
+A green GitHub Actions run is necessary when applicable, but it is not sufficient proof of Home Assistant runtime compatibility or real-device SMS behavior. Do not describe a change as PR-ready while required Home Assistant or authorized modem tests remain outstanding. A pull request is the final review and integration step, not the start of initial validation.
 
 ## Collaboration with the project maintainer
 
-Prefer incremental changes that can be reviewed and tested independently.
+Prefer incremental changes that can be reviewed and tested independently. Work one step at a time, obtain the maintainer's approval before making each agreed change, and ask clarifying questions rather than assuming ambiguous requirements or design decisions. Do not create or merge pull requests on the maintainer's behalf.
 
 When supplying a file for manual replacement, provide its complete contents rather than an isolated patch, unless the maintainer requests otherwise.
 
@@ -282,7 +294,8 @@ Before considering a change complete, confirm:
 - LTE fallback and router configuration remain untouched.
 - Home Assistant failures are not silently hidden.
 - Automated tests are passing where applicable.
-- Required manual tests are documented or completed.
+- All applicable Home Assistant runtime tests have been completed before PR readiness.
+- All applicable real-SMS tests have been explicitly authorized and completed before PR readiness.
 - Documentation matches the implementation.
 - No future functionality is presented as already implemented.
 - No unsupported device-compatibility claims have been added.
