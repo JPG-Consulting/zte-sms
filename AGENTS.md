@@ -250,6 +250,8 @@ The rulesets have been exercised through completed pull requests into `develop`,
 
 Treat [CONTRIBUTING.md](CONTRIBUTING.md) as the authoritative source for branching, pull request, review, and merge requirements.
 
+For short-lived working branches targeting `develop`, **Squash and merge** is the default. Exceptions require a documented technical justification in the pull request. The final squash commit message must summarize the completed change rather than copy intermediate commit messages. For release pull requests from `develop` to `main`, **Create a merge commit** is the default to preserve the integrated commit history; squash is an exception requiring a documented justification. The maintainer performs merges; agents must not merge pull requests.
+
 ## Workflow for each change
 
 1. Read the relevant documentation, source files, and tests.
