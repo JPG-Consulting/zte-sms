@@ -138,6 +138,7 @@ No automatic deletion is currently implemented.
 - [x] With separate explicit maintainer authorization, send one additional real SMS through `zte_sms.send_sms` after the lock change; the recipient confirmed receipt and Home Assistant displayed no error.
 - [x] Verify that mocked concurrency tests enforce serialization of overlapping notification requests and that GitHub Actions passes after updating mocked clients with asynchronous locks.
 - [ ] Verify overlapping requests from both sending paths in a running Home Assistant instance if safe, explicitly authorized conditions become available; concurrent modem use has been exercised only with mocks, not simultaneous real SMS.
+- [x] Re-submit the existing recipient and batch size 3 unchanged through the Home Assistant options form; saving completed without errors, and reopening the form preserved both values. This verifies saving unchanged configuration, not adding, replacing, or removing recipients.
 - [ ] Verify successful recipient updates (changing and saving the recipient list) in Home Assistant; this was not exercised to avoid altering the live destination.
 - [ ] Verify notification failure/error display and privacy-safe logs in a running Home Assistant instance; no live modem failure was intentionally induced.
 - [x] Verify the existing single-recipient `zte_sms.send_sms` action with one explicitly authorized real SMS to the maintainer's own number. Home Assistant reported no error and the recipient confirmed receipt.
