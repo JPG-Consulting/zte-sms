@@ -16,7 +16,8 @@ Initial development and testing target the **ZTE MF833U1**.
 - Configurable modem IP address or hostname.
 - Multiple default SMS recipients, configurable during setup or through integration options.
 - `zte_sms.send_sms` action for sending a message to one explicitly specified phone number.
-- `notify.zte_sms` notification entity for sending a message separately to each configured default recipient.
+- `notify.zte_sms` notification entity for sending a message separately to each configured default recipient, in sequential batches of configurable size (1–5 SMS per batch; default: 5).
+- Privacy-safe warning and error logs for unsuccessful SMS submissions, with per-operation outcome counts.
 - UTF-16BE message encoding with `UNICODE` mode, successfully tested with Spanish accented characters and `ñ`.
 
 ### Not yet implemented
@@ -27,7 +28,7 @@ Initial development and testing target the **ZTE MF833U1**.
 - Local SMS archiving, message viewer, or synchronization.
 - Cellular signal or network-status monitoring.
 - Independently verified SMS delivery confirmation.
-- Comprehensive error reporting and privacy-safe diagnostic logging.
+- Comprehensive diagnostic reporting beyond the current privacy-safe SMS submission logs and outcome counts.
 
 **The integration does not currently poll the SMS inbox, delete messages, or modify modem or router settings.**
 
@@ -83,7 +84,7 @@ The default modem address is `192.168.0.1`.
 
 Default recipients must use international phone-number format, beginning with `+` followed by digits.
 
-You can update the recipient list through the integration's **Options**.
+You can update the recipient list and the **SMS per batch** setting through the integration's **Options**. Batch size must be a whole number from **1 to 5**, and defaults to **5**. If the stored batch size is invalid, notification sending continues using **5** for that operation and logs a warning; the stored setting is not silently changed.
 
 ## Sending SMS
 
@@ -112,7 +113,17 @@ data:
   message: "Alarm notification from Home Assistant"
 ```
 
-The notification entity sends an individual SMS to each configured default recipient.
+The notification entity sends an individual SMS to each configured default recipient. Recipients are processed **sequentially in batches**, with no automatic retries. A failure for one recipient does not prevent attempts for the remaining recipients or batches. The space between batches is reserved for future safe modem maintenance; no maintenance is currently performed.
+
+The notification operation has three possible outcomes:
+
+- **Success:** the modem confirmed acceptance of every SMS submission.
+- **Partial failure:** at least one submission was confirmed accepted, but one or more were rejected or have an unknown outcome.
+- **Complete failure:** no submission was confirmed accepted. This does **not** necessarily mean that no SMS was transmitted.
+
+For partial and complete failures, the notification action raises an error **after** attempting all recipients. The error reports counts of accepted, rejected, and unknown outcomes, without exposing phone numbers or message contents. Invalid recipient data rejected before contacting the modem counts as **rejected**. Timeouts, HTTP failures, and unverified modem responses count as **unknown**, because the modem may still have received the request.
+
+Recipient validation failures and unknown submission outcomes generate privacy-safe **WARNING** logs; unexpected submission exceptions generate privacy-safe **ERROR** logs. Logging does not interrupt processing. No SMS is automatically retried, and no stored modem messages are deleted.
 
 A successful response from the modem means that the modem accepted the sending request. It does **not** independently prove delivery to the recipient.
 
