@@ -133,6 +133,11 @@ No automatic deletion is currently implemented.
 - [x] Verify sequential batch boundaries, ordering, continuation, and outcome handling using mocked modem tests in GitHub Actions.
 - [x] Verify integration reload in Home Assistant: reload completed without errors, `notify.zte_sms` remained available, and batch size 3 and the configured recipient were preserved.
 - [x] Verify invalid recipient input feedback: an invalid phone number without `+` was rejected with the expected international-format error; closing without saving preserved the original recipient and batch size 3.
+- [x] After introducing the shared per-modem asynchronous SMS lock, copy the updated `client.py`, `notify.py`, and `__init__.py` into Home Assistant and restart; the integration loaded without errors, its notification entity remained available, and integration reload succeeded.
+- [x] With explicit maintainer authorization, send one additional real SMS through `notify.send_message` targeting `notify.zte_sms` after the lock change; the recipient confirmed receipt and Home Assistant displayed no error.
+- [x] With separate explicit maintainer authorization, send one additional real SMS through `zte_sms.send_sms` after the lock change; the recipient confirmed receipt and Home Assistant displayed no error.
+- [x] Verify that mocked concurrency tests enforce serialization of overlapping notification requests and that GitHub Actions passes after updating mocked clients with asynchronous locks.
+- [ ] Verify overlapping requests from both sending paths in a running Home Assistant instance if safe, explicitly authorized conditions become available; concurrent modem use has been exercised only with mocks, not simultaneous real SMS.
 - [ ] Verify successful recipient updates (changing and saving the recipient list) in Home Assistant; this was not exercised to avoid altering the live destination.
 - [ ] Verify notification failure/error display and privacy-safe logs in a running Home Assistant instance; no live modem failure was intentionally induced.
 - [x] Verify the existing single-recipient `zte_sms.send_sms` action with one explicitly authorized real SMS to the maintainer's own number. Home Assistant reported no error and the recipient confirmed receipt.
