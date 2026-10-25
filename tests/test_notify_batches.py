@@ -145,8 +145,15 @@ class BatchTests(unittest.TestCase):
             self.numbers[3]: self.UnknownError("timeout"),
         }
         entity = self.make_entity(count=6, batch_size=2, failure=failures)
-        with self.assertRaises(self.module.SMSBatchError) as caught:
-            self.run_send(entity)
+        with self.assertLogs(self.module._LOGGER, level="WARNING") as logs:
+            with self.assertRaises(self.module.SMSBatchError) as caught:
+                self.run_send(entity)
+        self.assertEqual(len(logs.output), 2)
+        self.assertIn("recipient validation failed", logs.output[0])
+        self.assertIn("submission outcome unknown", logs.output[1])
+        for record in logs.output:
+            self.assertNotIn("+340", record)
+            self.assertNotIn("Test message", record)
         result = caught.exception.result
         self.assertEqual(result.status, "partial_failure")
         self.assertEqual((result.total, result.accepted, result.rejected, result.unknown), (6, 4, 1, 1))
@@ -169,8 +176,14 @@ class BatchTests(unittest.TestCase):
         entity = self.make_entity(
             count=3, failure={self.numbers[0]: RuntimeError("unexpected")}
         )
-        with self.assertRaises(self.module.SMSBatchError) as caught:
-            self.run_send(entity)
+        with self.assertLogs(self.module._LOGGER, level="ERROR") as logs:
+            with self.assertRaises(self.module.SMSBatchError) as caught:
+                self.run_send(entity)
+        self.assertEqual(len(logs.output), 1)
+        self.assertIn("Unexpected error", logs.output[0])
+        self.assertNotIn("+340", logs.output[0])
+        self.assertNotIn("Test message", logs.output[0])
+        self.assertNotIn("unexpected)", logs.output[0])
         self.assertEqual(caught.exception.result.unknown, 1)
         self.assertEqual(self.sent, self.numbers[:3])
 
