@@ -165,7 +165,10 @@ class ZTESMSOptionsFlow(config_entries.OptionsFlow):
                         if user_input is not None
                         else current_batch_size
                     ),
-                ): validate_batch_size,
+                ): vol.All(
+                    vol.Coerce(int),
+                    vol.Range(min=MIN_BATCH_SIZE, max=MAX_BATCH_SIZE),
+                ),
                 recipients_schema(
                     user_input.get("recipients", current_recipients)
                     if user_input
