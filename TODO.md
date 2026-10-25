@@ -20,7 +20,7 @@ For implemented functionality, see [README.md](README.md). For architectural con
 - [x] Configure active GitHub rulesets for `main` and `develop`.
 - [x] Require the `unit` GitHub Actions check for both protected branches.
 - [x] Complete an independent cold-start repository audit.
-- [ ] Verify the protected-branch workflow through a real pull request.
+- [x] Verify the protected-branch workflow through a real pull request.
 
 The project is currently in early development. Successful SMS tests and passing CI do not yet establish production readiness.
 
@@ -174,10 +174,10 @@ On-demand queries and periodic monitoring are separate capabilities.
 - [x] Configure branch rulesets for `main` and `develop`.
 - [x] Require pull requests and the `unit` status check.
 - [x] Complete the first independent cold-start audit.
+- [x] Validate the rulesets through the first real pull request.
 
 ### Pending
 
-- [ ] Validate the rulesets through the first real pull request.
 - [ ] Update the public repository description to reflect outbound SMS functionality accurately.
 - [ ] Review GitHub Actions warnings and action versions.
 - [ ] Consider Home Assistant-specific validation in CI.
