@@ -8,7 +8,14 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import selector
 
-from .const import DOMAIN, DEFAULT_HOST
+from .const import (
+    CONF_BATCH_SIZE,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_HOST,
+    DOMAIN,
+    MAX_BATCH_SIZE,
+    MIN_BATCH_SIZE,
+)
 
 
 def validate_recipients(recipients: list[str]) -> list[str]:
@@ -22,6 +29,13 @@ def validate_recipients(recipients: list[str]) -> list[str]:
         raise ValueError("invalid_phone_number")
 
     return list(dict.fromkeys(numbers))
+
+
+def validate_batch_size(value: int) -> int:
+    """Accept only integer batch sizes within the supported range."""
+    if type(value) is not int or not MIN_BATCH_SIZE <= value <= MAX_BATCH_SIZE:
+        raise vol.Invalid("invalid_batch_size")
+    return value
 
 
 def recipients_schema(default: list[str] | None = None):
@@ -102,10 +116,10 @@ class ZTESMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class ZTESMSOptionsFlow(config_entries.OptionsFlow):
-    """Manage default SMS recipients."""
+    """Manage default SMS recipients and batch size."""
 
     async def async_step_init(self, user_input=None):
-        """Configure default recipients."""
+        """Configure default recipients and batch size."""
         errors = {}
 
         if user_input is not None:
@@ -115,10 +129,17 @@ class ZTESMSOptionsFlow(config_entries.OptionsFlow):
                 )
             except ValueError:
                 errors["base"] = "invalid_phone_number"
-            else:
+            try:
+                batch_size = validate_batch_size(user_input.get(CONF_BATCH_SIZE))
+            except vol.Invalid:
+                errors[CONF_BATCH_SIZE] = "invalid_batch_size"
+            if not errors:
                 return self.async_create_entry(
                     title="",
-                    data={"recipients": recipients},
+                    data={
+                        "recipients": recipients,
+                        CONF_BATCH_SIZE: batch_size,
+                    },
                 )
 
         current_recipients = self.config_entry.options.get(
@@ -126,8 +147,28 @@ class ZTESMSOptionsFlow(config_entries.OptionsFlow):
             self.config_entry.data.get("recipients", []),
         )
 
+        current_batch_size = self.config_entry.options.get(
+            CONF_BATCH_SIZE, DEFAULT_BATCH_SIZE
+        )
+        try:
+            current_batch_size = validate_batch_size(current_batch_size)
+        except vol.Invalid:
+            # Display a valid default without changing the stored options.
+            current_batch_size = DEFAULT_BATCH_SIZE
+
         schema = vol.Schema(
             {
+                vol.Required(
+                    CONF_BATCH_SIZE,
+                    default=(
+                        user_input.get(CONF_BATCH_SIZE, current_batch_size)
+                        if user_input is not None
+                        else current_batch_size
+                    ),
+                ): vol.All(
+                    vol.Coerce(int),
+                    vol.Range(min=MIN_BATCH_SIZE, max=MAX_BATCH_SIZE),
+                ),
                 recipients_schema(
                     user_input.get("recipients", current_recipients)
                     if user_input

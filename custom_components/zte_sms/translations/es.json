@@ -1,4 +1,3 @@
-
 {
   "title": "ZTE SMS",
   "config": {
@@ -26,18 +25,21 @@
   "options": {
     "step": {
       "init": {
-        "title": "Destinatarios predeterminados de SMS",
-        "description": "Gestiona los números de teléfono que recibirán las notificaciones SMS. Puedes dejar la lista vacía.",
+        "title": "Destinatarios y lotes de SMS",
+        "description": "Gestiona los números que recibirán las notificaciones SMS y el tamaño de cada lote. Puedes dejar la lista de números vacía.",
         "data": {
-          "recipients": "Números de teléfono"
+          "recipients": "Números de teléfono",
+          "batch_size": "SMS por lote"
         },
         "data_description": {
-          "recipients": "Añade o elimina números de teléfono en formato internacional, por ejemplo +34611111111."
+          "recipients": "Añade o elimina números de teléfono en formato internacional, por ejemplo +34611111111.",
+          "batch_size": "Número de SMS por lote, entre 1 y 5 (predeterminado: 5)."
         }
       }
     },
     "error": {
-      "invalid_phone_number": "Introduce números de teléfono válidos en formato internacional, comenzando por +."
+      "invalid_phone_number": "Introduce números de teléfono válidos en formato internacional, comenzando por +.",
+      "invalid_batch_size": "Introduce un número entero entre 1 y 5."
     }
   },
   "services": {
