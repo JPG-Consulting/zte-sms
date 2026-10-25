@@ -150,6 +150,11 @@ class ZTESMSOptionsFlow(config_entries.OptionsFlow):
         current_batch_size = self.config_entry.options.get(
             CONF_BATCH_SIZE, DEFAULT_BATCH_SIZE
         )
+        try:
+            current_batch_size = validate_batch_size(current_batch_size)
+        except vol.Invalid:
+            # Display a valid default without changing the stored options.
+            current_batch_size = DEFAULT_BATCH_SIZE
 
         schema = vol.Schema(
             {
