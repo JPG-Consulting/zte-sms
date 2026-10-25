@@ -108,42 +108,43 @@ class ZTESMSNotifyEntity(NotifyEntity):
             )
             batch_size = DEFAULT_BATCH_SIZE
 
-        for start in range(0, len(recipients), batch_size):
-            if start:
-                try:
-                    await self._between_batches()
-                except Exception:
-                    # Maintenance failures must not interrupt SMS submissions.
-                    _LOGGER.warning(
-                        "ZTE SMS maintenance between batches failed; continuing",
-                    )
-
-            for number in recipients[start : start + batch_size]:
-                try:
-                    await self._client.send_sms(number, message)
-                except ValueError:
-                    # Validation happens before the modem request.
-                    result.rejected += 1
-                    rejected_numbers.append(number)
-                    _LOGGER.warning(
-                        "ZTE SMS recipient validation failed; skipping recipient"
-                    )
-                except ZTESMSOutcomeUnknownError:
-                    result.unknown += 1
-                    unknown_numbers.append(number)
-                    _LOGGER.warning(
-                        "ZTE SMS submission outcome unknown; continuing"
-                    )
-                except Exception:
-                    # Unexpected failures must not stop remaining recipients.
-                    # Their submission outcome cannot be assumed.
-                    result.unknown += 1
-                    unknown_numbers.append(number)
-                    _LOGGER.error(
-                        "Unexpected error during ZTE SMS submission; outcome unknown"
-                    )
-                else:
-                    result.accepted += 1
-
+        async with self._client.sms_lock:
+            for start in range(0, len(recipients), batch_size):
+                if start:
+                    try:
+                        await self._between_batches()
+                    except Exception:
+                        # Maintenance failures must not interrupt SMS submissions.
+                        _LOGGER.warning(
+                            "ZTE SMS maintenance between batches failed; continuing",
+                        )
+    
+                for number in recipients[start : start + batch_size]:
+                    try:
+                        await self._client.send_sms(number, message)
+                    except ValueError:
+                        # Validation happens before the modem request.
+                        result.rejected += 1
+                        rejected_numbers.append(number)
+                        _LOGGER.warning(
+                            "ZTE SMS recipient validation failed; skipping recipient"
+                        )
+                    except ZTESMSOutcomeUnknownError:
+                        result.unknown += 1
+                        unknown_numbers.append(number)
+                        _LOGGER.warning(
+                            "ZTE SMS submission outcome unknown; continuing"
+                        )
+                    except Exception:
+                        # Unexpected failures must not stop remaining recipients.
+                        # Their submission outcome cannot be assumed.
+                        result.unknown += 1
+                        unknown_numbers.append(number)
+                        _LOGGER.error(
+                            "Unexpected error during ZTE SMS submission; outcome unknown"
+                        )
+                    else:
+                        result.accepted += 1
+    
         if result.status != "success":
             raise SMSBatchError(result)
