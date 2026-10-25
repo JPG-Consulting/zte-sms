@@ -125,14 +125,23 @@ class ZTESMSNotifyEntity(NotifyEntity):
                     # Validation happens before the modem request.
                     result.rejected += 1
                     rejected_numbers.append(number)
+                    _LOGGER.warning(
+                        "ZTE SMS recipient validation failed; skipping recipient"
+                    )
                 except ZTESMSOutcomeUnknownError:
                     result.unknown += 1
                     unknown_numbers.append(number)
+                    _LOGGER.warning(
+                        "ZTE SMS submission outcome unknown; continuing"
+                    )
                 except Exception:
                     # Unexpected failures must not stop remaining recipients.
                     # Their submission outcome cannot be assumed.
                     result.unknown += 1
                     unknown_numbers.append(number)
+                    _LOGGER.error(
+                        "Unexpected error during ZTE SMS submission; outcome unknown"
+                    )
                 else:
                     result.accepted += 1
 
