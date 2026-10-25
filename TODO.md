@@ -117,7 +117,7 @@ No automatic deletion is currently implemented.
 - [x] With explicit maintainer authorization, send one real SMS using `notify.send_message` targeting `notify.zte_sms` with batch size 3 and one configured recipient. Home Assistant reported no error and the recipient confirmed receipt.
 - [x] Verify sequential batch boundaries, ordering, continuation, and outcome handling using mocked modem tests in GitHub Actions.
 - [ ] Verify remaining Home Assistant runtime scenarios: integration reload, invalid-input feedback, recipient updates, notification failure/error display, and privacy-safe logs.
-- [ ] Verify that the existing single-recipient `zte_sms.send_sms` action has no regression.
+- [x] Verify the existing single-recipient `zte_sms.send_sms` action with one explicitly authorized real SMS to the maintainer's own number. Home Assistant reported no error and the recipient confirmed receipt.
 - [ ] Verify multiple consecutive batches and failure scenarios against the real modem if sufficient explicitly authorized test recipients and safe test conditions become available. Only one real recipient was available during this validation, so multi-recipient and multi-batch real-device behavior remains unverified.
 - [ ] Do not declare this branch ready for a PR until applicable Home Assistant runtime and authorized real-SMS tests pass. If tests cannot be completed, keep validation explicitly pending and document the limitation.
 - [x] Record completed tests and remaining limitations in this TODO after the initial Home Assistant test session.
