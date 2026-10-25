@@ -108,14 +108,19 @@ No automatic deletion is currently implemented.
 - [ ] Record the tested modem firmware version where available.
 - [ ] Investigate Unicode edge cases, message-length limits, and multipart SMS behavior.
 
-### Planned Home Assistant validation for this feature branch
+### Home Assistant validation for this feature branch
 
-- [ ] Install `feat/configurable-sms-batches` in Home Assistant after branch review.
-- [ ] Verify Home Assistant startup, integration setup/reload, batch-size options form (1–5, default 5, invalid-input feedback), recipient configuration, and notification behavior in a running Home Assistant instance.
-- [ ] Verify Home Assistant notification errors, privacy-safe logs, and existing single-recipient `zte_sms.send_sms` behavior for regressions.
-- [ ] Perform real-SMS submission tests for this SMS-impacting branch **with explicit maintainer authorization**, covering batch boundaries, recipient ordering, successful notifications, and relevant failure/regression scenarios; document results and observed modem behavior.
-- [ ] Do not declare this branch ready for a PR until applicable Home Assistant runtime and authorized real-SMS tests pass. If tests cannot be completed, keep validation explicitly pending.
-- [ ] Revisit this TODO after Home Assistant testing to update completed items, remaining defects, and release readiness.
+- [x] Install `feat/configurable-sms-batches` in a running Home Assistant instance and restart Home Assistant.
+- [x] Verify that the integration loads and its ZTE SMS notification entity is present.
+- [x] Verify that the options form opens without an HTTP 500 error after replacing the non-serializable custom field validator.
+- [x] Verify that the batch-size selector supports values 1–5, initially displays the default 5, and retains a saved value of 3 after reopening.
+- [x] With explicit maintainer authorization, send one real SMS using `notify.send_message` targeting `notify.zte_sms` with batch size 3 and one configured recipient. Home Assistant reported no error and the recipient confirmed receipt.
+- [x] Verify sequential batch boundaries, ordering, continuation, and outcome handling using mocked modem tests in GitHub Actions.
+- [ ] Verify remaining Home Assistant runtime scenarios: integration reload, invalid-input feedback, recipient updates, notification failure/error display, and privacy-safe logs.
+- [ ] Verify that the existing single-recipient `zte_sms.send_sms` action has no regression.
+- [ ] Verify multiple consecutive batches and failure scenarios against the real modem if sufficient explicitly authorized test recipients and safe test conditions become available. Only one real recipient was available during this validation, so multi-recipient and multi-batch real-device behavior remains unverified.
+- [ ] Do not declare this branch ready for a PR until applicable Home Assistant runtime and authorized real-SMS tests pass. If tests cannot be completed, keep validation explicitly pending and document the limitation.
+- [x] Record completed tests and remaining limitations in this TODO after the initial Home Assistant test session.
 
 ### Milestone 1 release criteria
 
