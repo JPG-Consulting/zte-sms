@@ -38,7 +38,8 @@
       }
     },
     "error": {
-      "invalid_phone_number": "Introduce números de teléfono válidos en formato internacional, comenzando por +."
+      "invalid_phone_number": "Introduce números de teléfono válidos en formato internacional, comenzando por +.",
+      "invalid_batch_size": "Introduce un número entero entre 1 y 5."
     }
   },
   "services": {
