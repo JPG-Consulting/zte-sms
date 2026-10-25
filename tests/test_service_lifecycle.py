@@ -131,6 +131,7 @@ class ServiceLifecycleTests(unittest.TestCase):
 
         self.client = Mock()
         self.client.send_sms = AsyncMock(return_value=True)
+        self.client.sms_lock = asyncio.Lock()
         self.client_factory.return_value = self.client
 
     def run_async(self, coroutine):
@@ -256,6 +257,7 @@ class ServiceLifecycleTests(unittest.TestCase):
 
         new_client = Mock()
         new_client.send_sms = AsyncMock(return_value=True)
+        new_client.sms_lock = asyncio.Lock()
         self.client_factory.return_value = new_client
 
         self.run_async(
