@@ -38,7 +38,8 @@
       }
     },
     "error": {
-      "invalid_phone_number": "Enter valid phone numbers in international format, starting with +."
+      "invalid_phone_number": "Enter valid phone numbers in international format, starting with +.",
+      "invalid_batch_size": "Enter a whole number between 1 and 5."
     }
   },
   "services": {
