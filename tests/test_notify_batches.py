@@ -90,7 +90,7 @@ class BatchTests(unittest.TestCase):
             return True
 
         entity = self.module.ZTESMSNotifyEntity(
-            entry, types.SimpleNamespace(send_sms=send_sms)
+            entry, types.SimpleNamespace(send_sms=send_sms, sms_lock=asyncio.Lock())
         )
 
         async def maintenance():
