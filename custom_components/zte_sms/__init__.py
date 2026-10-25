@@ -77,10 +77,11 @@ async def async_setup_entry(
 
         active_client = next(iter(active_clients.values()))
 
-        await active_client.send_sms(
-            number=call.data["number"],
-            message=call.data["message"],
-        )
+        async with active_client.sms_lock:
+            await active_client.send_sms(
+                number=call.data["number"],
+                message=call.data["message"],
+            )
 
     if not hass.services.has_service(DOMAIN, SERVICE_SEND_SMS):
         hass.services.async_register(
