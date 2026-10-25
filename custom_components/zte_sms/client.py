@@ -52,6 +52,8 @@ class ZTEClient:
     def __init__(self, base_url: str = "http://192.168.0.1", timeout: float = 10.0):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        # Shared by notification batches and the direct send service.
+        self.sms_lock = asyncio.Lock()
 
     def _request(self, endpoint: str, params: dict[str, str], *, post: bool) -> dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
