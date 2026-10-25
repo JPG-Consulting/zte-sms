@@ -19,6 +19,7 @@ Home Assistant
     |       |
     |       +-- Modem host
     |       +-- Default SMS recipients
+    |       +-- SMS batch size (1–5; default 5)
     |
     +-- zte_sms.send_sms action
     |       |
@@ -51,7 +52,7 @@ The integration does not manage the MikroTik router or its LTE failover configur
 
 The configuration flow collects the modem host and an optional list of default SMS recipients.
 
-The options flow allows the recipient list to be updated.
+The options flow allows the recipient list and SMS batch size to be updated. Batch size is strictly validated as an integer from **1 to 5**, with a default of **5**. If a stored batch size is invalid, notification sending uses the default for that operation, emits a privacy-safe warning, and leaves the stored value unchanged.
 
 Phone numbers are validated in international format, starting with `+` followed by digits. Duplicate recipients are removed.
 
@@ -92,7 +93,11 @@ The action sends a request when invoked. It does not schedule periodic sending.
 
 The integration provides a modern Home Assistant notification entity, `notify.zte_sms`.
 
-When `notify.send_message` is invoked for this entity, the integration retrieves the configured default recipients and submits an individual SMS request for each recipient.
+When `notify.send_message` is invoked for this entity, the integration retrieves the configured default recipients and submits an individual SMS request for each recipient. Requests run **sequentially in configurable batches**, without automatic retries. A failed submission does not prevent attempts for the remaining recipients or batches. The between-batch maintenance hook is currently a no-op; if it fails in the future, the failure is logged without stopping subsequent batches.
+
+The entity counts **accepted** submissions (confirmed modem acceptance), **rejected** submissions (pre-request validation failures), and **unknown** outcomes (timeouts, HTTP errors, unverified modem responses, or unexpected submission exceptions). The operation is classified as `success` when all submissions are accepted, `partial_failure` when some but not all are accepted, and `complete_failure` when none are confirmed accepted. A complete failure does not prove that no SMS was transmitted.
+
+For partial or complete failure, the entity raises an aggregate exception **after attempting all recipients**, containing outcome counts but no phone numbers or SMS bodies. Validation failures and unknown submission outcomes produce privacy-safe `WARNING` logs; unexpected submission exceptions produce privacy-safe `ERROR` logs. Neither logging nor individual failures stop the remaining attempts.
 
 The entity requires at least one configured default recipient.
 
@@ -120,7 +125,7 @@ This requirement is particularly important for time-sensitive alarm notification
 
 The integration must not perform preliminary modem queries solely to confirm signal availability before attempting submission.
 
-Comprehensive failure classification, uncertain-outcome handling, and diagnostic logging remain areas for improvement.
+Basic submission-outcome classification and privacy-safe diagnostic logging are implemented for notification batches. Further diagnostic coverage and client-level error handling remain areas for improvement.
 
 Automatic retries must not be introduced where they could result in duplicate SMS submissions.
 
