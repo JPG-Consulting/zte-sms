@@ -19,6 +19,14 @@ class ZTEAPIError(RuntimeError):
     """The modem could not complete an API operation."""
 
 
+class ZTESMSRejectedError(ZTEAPIError):
+    """SMS submission was definitively rejected (no verified cases yet)."""
+
+
+class ZTESMSOutcomeUnknownError(ZTEAPIError):
+    """SMS submission may have been processed; do not retry automatically."""
+
+
 def encode_sms(text: str) -> str:
     return text.encode("utf-16-be").hex().upper()
 
@@ -84,12 +92,20 @@ class ZTEClient:
             "ID": "-1",
             "encode_type": "UNICODE",
         }
-        response = await asyncio.to_thread(
-            self._request, "/goform/goform_set_cmd_process", params, post=True
-        )
+        try:
+            response = await asyncio.to_thread(
+                self._request, "/goform/goform_set_cmd_process", params, post=True
+            )
+        except ZTEAPIError as exc:
+            raise ZTESMSOutcomeUnknownError(
+                "SMS outcome unknown after modem request; do not retry automatically"
+            ) from exc
         if response.get("result") != "success":
-            raise ZTEAPIError("Modem did not confirm SMS submission")
-        return True  # Submission success, NOT a delivery receipt.
+            # No non-success response is yet verified as a definitive rejection.
+            raise ZTESMSOutcomeUnknownError(
+                "Modem did not confirm SMS submission; outcome unknown"
+            )
+        return True  # Initial submission success, NOT final status or delivery.
 
     async def get_messages(self) -> list[dict[str, Any]]:
         """Read SMS once; this method does not schedule polling."""
