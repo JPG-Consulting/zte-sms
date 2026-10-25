@@ -51,6 +51,8 @@ def load_notify():
     const.DOMAIN = "zte_sms"
     const.CONF_BATCH_SIZE = "batch_size"
     const.DEFAULT_BATCH_SIZE = 5
+    const.MIN_BATCH_SIZE = 1
+    const.MAX_BATCH_SIZE = 5
 
     spec = importlib.util.spec_from_file_location(
         f"{PACKAGE}.notify", INTEGRATION_DIR / "notify.py"
@@ -117,6 +119,21 @@ class BatchTests(unittest.TestCase):
                 self.assertEqual(
                     self.maintenance, list(range(size, 7, size))
                 )
+
+    def test_invalid_stored_batch_sizes_fall_back_without_blocking(self):
+        for invalid in (0, -2, 8, "abc", "3", 2.5, True, None):
+            with self.subTest(invalid=invalid):
+                self.sent.clear()
+                self.maintenance.clear()
+                entity = self.make_entity(count=11, batch_size=invalid)
+                entity._entry.options["batch_size"] = invalid
+                with self.assertLogs(self.module._LOGGER, level="WARNING") as logs:
+                    self.run_send(entity)
+                self.assertEqual(self.sent, self.numbers)
+                self.assertEqual(self.maintenance, [5, 10])
+                self.assertEqual(len(logs.output), 1)
+                self.assertIn("using default value 5", logs.output[0])
+                self.assertEqual(entity._entry.options["batch_size"], invalid)
 
     def test_success_does_not_raise(self):
         self.run_send(self.make_entity(count=3))
