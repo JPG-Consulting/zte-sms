@@ -11,6 +11,10 @@ For implemented functionality, see [README.md](README.md). For architectural con
 - [x] Support multiple configurable default SMS recipients.
 - [x] Implement the `zte_sms.send_sms` action.
 - [x] Implement the `notify.zte_sms` notification entity.
+- [x] Add configurable sequential notification batches (1–5 SMS; default 5), with safe fallback for invalid stored batch sizes.
+- [x] Implement notification-level accepted/rejected/unknown outcome counts and aggregate partial/complete failure reporting.
+- [x] Continue notification processing after individual SMS failures and between-batch maintenance-hook failures.
+- [x] Add privacy-safe notification WARNING/ERROR logging and mocked batch-processing tests.
 - [x] Verify basic outbound SMS on the tested ZTE MF833U1.
 - [x] Verify Unicode SMS containing Spanish accented characters and `ñ`.
 - [x] Add initial automated tests and GitHub Actions.
@@ -43,10 +47,10 @@ The SMS submission path must not wait for inbox synchronization, LTE status quer
   - [ ] Treat timeouts and lost responses conservatively.
   - [ ] Preserve actionable errors for Home Assistant callers.
   - [ ] Never automatically retry a submission when doing so could duplicate an SMS.
-- [ ] Improve notification handling for multiple recipients.
-  - [ ] Account for partial success when a later recipient fails.
-  - [ ] Avoid leaking full phone numbers or message contents in diagnostics.
-  - [ ] Add tests for failures at different points in the recipient list.
+- [x] Improve notification handling for multiple recipients.
+  - [x] Account for partial success when a later recipient fails.
+  - [x] Avoid leaking full phone numbers or message contents in notification diagnostics.
+  - [x] Add mocked tests for failures at different points in the recipient list.
 - [ ] Investigate concurrent SMS submissions.
   - [ ] Determine whether the tested modem safely supports overlapping requests.
   - [ ] Define appropriate per-modem concurrency behavior.
@@ -77,18 +81,20 @@ No automatic deletion is currently implemented.
 
 ### P1 — Diagnostics and test coverage
 
-- [ ] Implement privacy-safe diagnostic logging.
-  - [ ] Use appropriate DEBUG, INFO, WARNING, and ERROR levels.
-  - [ ] Never log SMS bodies, full phone numbers, credentials, cookies, or tokens.
-  - [ ] Keep error propagation independent of logging configuration.
-  - [ ] Prefer Home Assistant's native logging controls.
-- [ ] Add automated coverage for Home Assistant integration behavior.
+- [ ] Extend privacy-safe diagnostic logging across the integration (basic notification WARNING/ERROR logs are implemented).
+  - [x] Add privacy-safe WARNING/ERROR logging for notification submission failures.
+  - [ ] Review appropriate DEBUG, INFO, WARNING, and ERROR levels across all components.
+  - [ ] Audit all components for SMS bodies, full phone numbers, credentials, cookies, or tokens in logs.
+  - [ ] Verify error propagation remains independent of logging configuration throughout the integration.
+  - [ ] Review use of Home Assistant's native logging controls.
+- [ ] Add automated coverage for Home Assistant integration behavior (mocked notification batch tests are implemented).
   - [ ] Configuration and options flows.
   - [ ] Setup, unload, and reload.
   - [ ] Action registration and execution.
   - [ ] Notification entity setup and sending.
   - [ ] Default-recipient updates and invalid inputs.
-  - [ ] Error propagation and partial notification failures.
+  - [x] Mocked notification batch processing, individual failure continuation, partial/complete outcomes, invalid stored batch size fallback, and privacy-safe warning/error logs.
+  - [ ] End-to-end Home Assistant runtime verification of notification failures and option validation.
 - [ ] Add simulated HTTP transport failure tests.
   - [ ] Connection failures.
   - [ ] HTTP errors.
@@ -101,6 +107,13 @@ No automatic deletion is currently implemented.
 - [ ] Validate the integration against an explicitly identified Home Assistant version.
 - [ ] Record the tested modem firmware version where available.
 - [ ] Investigate Unicode edge cases, message-length limits, and multipart SMS behavior.
+
+### Planned Home Assistant validation for this feature branch
+
+- [ ] Install `feat/configurable-sms-batches` in Home Assistant after branch review.
+- [ ] Verify the batch-size option (1–5, default 5), recipient configuration, and notification behavior in Home Assistant.
+- [ ] Perform any real-SMS tests **only with explicit authorization**; document results and any observed modem behavior.
+- [ ] Revisit this TODO after Home Assistant testing to update completed items, remaining defects, and release readiness.
 
 ### Milestone 1 release criteria
 
