@@ -111,8 +111,10 @@ No automatic deletion is currently implemented.
 ### Planned Home Assistant validation for this feature branch
 
 - [ ] Install `feat/configurable-sms-batches` in Home Assistant after branch review.
-- [ ] Verify the batch-size option (1–5, default 5), recipient configuration, and notification behavior in Home Assistant.
-- [ ] Perform any real-SMS tests **only with explicit authorization**; document results and any observed modem behavior.
+- [ ] Verify Home Assistant startup, integration setup/reload, batch-size options form (1–5, default 5, invalid-input feedback), recipient configuration, and notification behavior in a running Home Assistant instance.
+- [ ] Verify Home Assistant notification errors, privacy-safe logs, and existing single-recipient `zte_sms.send_sms` behavior for regressions.
+- [ ] Perform real-SMS submission tests for this SMS-impacting branch **with explicit maintainer authorization**, covering batch boundaries, recipient ordering, successful notifications, and relevant failure/regression scenarios; document results and observed modem behavior.
+- [ ] Do not declare this branch ready for a PR until applicable Home Assistant runtime and authorized real-SMS tests pass. If tests cannot be completed, keep validation explicitly pending.
 - [ ] Revisit this TODO after Home Assistant testing to update completed items, remaining defects, and release readiness.
 
 ### Milestone 1 release criteria
