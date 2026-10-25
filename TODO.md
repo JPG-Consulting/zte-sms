@@ -116,7 +116,10 @@ No automatic deletion is currently implemented.
 - [x] Verify that the batch-size selector supports values 1–5, initially displays the default 5, and retains a saved value of 3 after reopening.
 - [x] With explicit maintainer authorization, send one real SMS using `notify.send_message` targeting `notify.zte_sms` with batch size 3 and one configured recipient. Home Assistant reported no error and the recipient confirmed receipt.
 - [x] Verify sequential batch boundaries, ordering, continuation, and outcome handling using mocked modem tests in GitHub Actions.
-- [ ] Verify remaining Home Assistant runtime scenarios: integration reload, invalid-input feedback, recipient updates, notification failure/error display, and privacy-safe logs.
+- [x] Verify integration reload in Home Assistant: reload completed without errors, `notify.zte_sms` remained available, and batch size 3 and the configured recipient were preserved.
+- [x] Verify invalid recipient input feedback: an invalid phone number without `+` was rejected with the expected international-format error; closing without saving preserved the original recipient and batch size 3.
+- [ ] Verify successful recipient updates (changing and saving the recipient list) in Home Assistant; this was not exercised to avoid altering the live destination.
+- [ ] Verify notification failure/error display and privacy-safe logs in a running Home Assistant instance; no live modem failure was intentionally induced.
 - [x] Verify the existing single-recipient `zte_sms.send_sms` action with one explicitly authorized real SMS to the maintainer's own number. Home Assistant reported no error and the recipient confirmed receipt.
 - [ ] Verify multiple consecutive batches and failure scenarios against the real modem if sufficient explicitly authorized test recipients and safe test conditions become available. Only one real recipient was available during this validation, so multi-recipient and multi-batch real-device behavior remains unverified.
 - [ ] Do not declare this branch ready for a PR until applicable Home Assistant runtime and authorized real-SMS tests pass. If tests cannot be completed, keep validation explicitly pending and document the limitation.
