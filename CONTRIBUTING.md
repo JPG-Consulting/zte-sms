@@ -218,7 +218,7 @@ Exceptions are permitted when there is a documented technical reason to preserve
 
 The maintainer chooses and performs the merge. AI coding agents must not create or merge pull requests on the maintainer's behalf without a separate explicit change to that agreement.
 
-This default applies to working-branch pull requests targeting `develop`. Pull requests from `develop` into `main` follow the release workflow; their merge strategy may be defined separately.
+This squash default applies only to working-branch pull requests targeting `develop`. For release pull requests from `develop` into `main`, **Create a merge commit is the default**, preserving the individual commits already integrated into `develop` and recording the release integration. **Squash and merge** may be used as an exception when there is a specific, documented reason. The maintainer selects the merge method and performs the merge.
 
 ### 6. Integrate validated changes into `main`
 
